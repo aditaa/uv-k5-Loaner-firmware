@@ -69,7 +69,7 @@ void SETTINGS_InitEEPROM(void)
 	gEeprom.DUAL_WATCH            = (Data[4] < 3) ? Data[4] : DUAL_WATCH_CHAN_A;
 	gEeprom.BACKLIGHT_TIME        = (Data[5] < ARRAY_SIZE(gSubMenu_BACKLIGHT)) ? Data[5] : 3;
 	gEeprom.TAIL_TONE_ELIMINATION = (Data[6] < 2) ? Data[6] : false;
-	gEeprom.VFO_OPEN              = (Data[7] < 2) ? Data[7] : true;
+	gEeprom.VFO_OPEN              = false;	// force channel-only operation
 
 	// 0E80..0E87
 	EEPROM_ReadBuffer(0x0E80, Data, 8);
@@ -122,6 +122,17 @@ void SETTINGS_InitEEPROM(void)
 	gEeprom.SCAN_RESUME_MODE             = (Data[5] < 3)              ? Data[5] : SCAN_RESUME_CO;
 	gEeprom.AUTO_KEYPAD_LOCK             = (Data[6] < 2)              ? Data[6] : false;
 	gEeprom.POWER_ON_DISPLAY_MODE        = (Data[7] < 4)              ? Data[7] : POWER_ON_DISPLAY_MODE_VOLTAGE;
+
+	if (gEeprom.KEY_M_LONG_PRESS_ACTION == ACTION_OPT_VFO_MR)
+		gEeprom.KEY_M_LONG_PRESS_ACTION = ACTION_OPT_NONE;
+	if (gEeprom.KEY_1_SHORT_PRESS_ACTION == ACTION_OPT_VFO_MR)
+		gEeprom.KEY_1_SHORT_PRESS_ACTION = ACTION_OPT_NONE;
+	if (gEeprom.KEY_1_LONG_PRESS_ACTION == ACTION_OPT_VFO_MR)
+		gEeprom.KEY_1_LONG_PRESS_ACTION = ACTION_OPT_NONE;
+	if (gEeprom.KEY_2_SHORT_PRESS_ACTION == ACTION_OPT_VFO_MR)
+		gEeprom.KEY_2_SHORT_PRESS_ACTION = ACTION_OPT_NONE;
+	if (gEeprom.KEY_2_LONG_PRESS_ACTION == ACTION_OPT_VFO_MR)
+		gEeprom.KEY_2_LONG_PRESS_ACTION = ACTION_OPT_NONE;
 
 	// 0E98..0E9F
 	EEPROM_ReadBuffer(0x0E98, Data, 8);
@@ -491,6 +502,8 @@ void SETTINGS_SaveSettings(void)
 	State[7] = gEeprom.MIC_SENSITIVITY;
 	EEPROM_WriteBuffer(0x0E70, State);
 
+	gEeprom.VFO_OPEN = false;
+
 	State[0] = (gEeprom.BACKLIGHT_MIN << 4) + gEeprom.BACKLIGHT_MAX;
 	State[1] = gEeprom.CHANNEL_DISPLAY_MODE;
 	State[2] = gEeprom.CROSS_BAND_RX_TX;
@@ -498,7 +511,7 @@ void SETTINGS_SaveSettings(void)
 	State[4] = gEeprom.DUAL_WATCH;
 	State[5] = gEeprom.BACKLIGHT_TIME;
 	State[6] = gEeprom.TAIL_TONE_ELIMINATION;
-	State[7] = gEeprom.VFO_OPEN;
+	State[7] = false;
 	EEPROM_WriteBuffer(0x0E78, State);
 
 	State[0] = gEeprom.BEEP_CONTROL;
