@@ -1,8 +1,8 @@
 *.d
 *.o
-firmware
-/firmware.packed.bin
-/firmware.bin
+loaner-firmware
+/loaner-firmware.packed.bin
+/loaner-firmware.bin
 /compiled-firmware
 .cache
 compile_commands.json

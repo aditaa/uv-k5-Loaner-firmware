@@ -7,10 +7,10 @@
 - Feature toggles and build-time limits are managed via the `ENABLE_*` blocks at the top of `Makefile`.
 
 ## Build, Test, and Development Commands
-- `make` (or `win_make.bat`) builds `firmware.bin`; when Python + `crcmod` is available it also emits `firmware.packed.bin`.
+- `make` (or `win_make.bat`) builds `loaner-firmware.bin`; when Python + `crcmod` is available it also emits `loaner-firmware.packed.bin`.
 - `./compile-with-docker.sh` supplies a reproducible GCC 10.3.1 toolchain and writes artifacts to `compiled-firmware/`.
 - `make clean` clears objects before benchmarking size; `make flash`/`make debug` expect OpenOCD with a J-Link config.
-- `python3 fw-pack.py firmware.bin AUTHOR VERSION firmware.packed.bin` injects metadata so web flashers accept the build.
+- `python3 fw-pack.py loaner-firmware.bin AUTHOR VERSION loaner-firmware.packed.bin` injects metadata so web flashers accept the build.
 
 ## Coding Style & Naming Conventions
 - Indent with tabs and place braces on the following line (Allman style); macros remain uppercase snake-case (`ENABLE_*`, `SYSCON_*`).
@@ -26,7 +26,7 @@
 ## Commit & Pull Request Guidelines
 - Follow the existing history with short, imperative subjects (`Fix typo`, `Add spectrum analyzer...`) and reference issues using `close #123` when relevant.
 - Squash WIP commits before pushing; PR descriptions should call out touched modules, Makefile flags, and validation results.
-- Attach screenshots, logs, or size diffs when behaviour or footprint changes, and list any artifacts (e.g., `firmware.packed.bin`) that reviewers should test.
+- Attach screenshots, logs, or size diffs when behaviour or footprint changes, and list any artifacts (e.g., `loaner-firmware.packed.bin`) that reviewers should test.
 
 ## Firmware Configuration Tips
 - Adjust `ENABLE_*` groups in `Makefile` to keep only the features you can fit, and re-run `make clean` before remeasuring size.
