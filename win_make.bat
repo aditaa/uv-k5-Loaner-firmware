@@ -32,10 +32,10 @@ make clean
 make
 
 
-:: If you have python installed, you can create a 'packed' .bin from the compiled firmware.bin file.
+:: If you have python installed, you can create a 'packed' .bin from the compiled loaner-firmware.bin file.
 :: The Quansheng windows upload-to-radio program requires a 'packed' .bin file.
 ::
-:: if you don't have python installed, then you can still upload the standard unpacked firmware.bin
+:: if you don't have python installed, then you can still upload the standard unpacked loaner-firmware.bin
 :: file another way ...
 ::
 :: I wrote a GUI version of k5prog to do this easily in windows ..
@@ -53,7 +53,7 @@ make
 
 :: show the compiled .bin file size
 ::
-::arm-none-eabi-size firmware
+::arm-none-eabi-size loaner-firmware
 
 
 
