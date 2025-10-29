@@ -36,7 +36,7 @@ When you already have the toolchain locally, you can mirror the Docker steps:
 ## Creating a Packed Binary Manually
 If the packed image was not produced automatically (for example on a minimal native setup), run:
 ```sh
-python3 fw-pack.py loaner-firmware.bin LOANER-0.2 loaner-firmware.packed.bin
+python3 fw-pack.py loaner-firmware.bin LNR24.03 loaner-firmware.packed.bin
 ```
 
 - The second argument is the version tag embedded in both the welcome screen and the packed metadata.  
@@ -62,7 +62,22 @@ Feature flags live near the top of `Makefile` as `ENABLE_*` macros. Adjust them 
 - A successful build leaves you with `firmware.bin` (raw) and, when Python and `crcmod` are available, `firmware.packed.bin`. The packed image is what Quansheng's loader validates.
 - Use `fw-pack.py` to stamp a release tag into the packed image. The second argument becomes the welcome banner and metadata field:
   ```sh
-  python3 fw-pack.py firmware.bin LOANER-0.2 loaner-firmware.packed.bin
+  python3 fw-pack.py firmware.bin LNR24.03 loaner-firmware.packed.bin
   ```
 - Change the `TARGET` on the `make` command line to tweak the output filenames without editing source, for example `make TARGET=loaner-firmware`.
 - Before publishing a release, spot-check the welcome screen on hardware to make sure the tag matches what you intend to share with end users.
+- Recommended version format: mirror other UV-K5 firmware projects (Quansheng's stock firmware ships as `v2.1.27`, Open Edition uses `OEFW-2023.09`). Tag milestones as `vYY.MM[.PATCH]` and feed a matching, <=10 character suffix to `fw-pack.py` (for example `LNR24.03`). CHIRP reads the full `*OEFW-LNR24.03` banner and treats it as a known build.
+
+## Branching and Release Flow
+1. Start work on a fresh branch instead of `main`:
+   ```sh
+   git checkout -b feature-name
+   ```
+2. Build and test (preferably with `./compile-with-docker.sh`), document the validation steps, then open a pull request back to `main`.
+3. Once the branch merges, create an annotated tag for the milestone:
+   ```sh
+   git tag -a v0.3 -m "Loaner v0.3"
+   git push origin v0.3
+   ```
+4. Draft a GitHub release from that tag and attach the packed firmware produced from the same commit (for example `compiled-firmware/loaner-firmware.packed.bin`).
+5. Repeat the process for each milestone so end users always have a tagged firmware matching the published release notes.
