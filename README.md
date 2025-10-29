@@ -72,52 +72,6 @@ Based on the open-source efforts by DualTachyon, OneOfEleven, Fagci, and the wid
 
 ## License
 Licensed under the Apache License 2.0. See `LICENSE` for details.
-Other versions may generate a flash file that is too big.
-You can get an appropriate version from: https://developer.arm.com/downloads/-/gnu-rm
-
-# Building
-
-To build the firmware, you need to fetch the submodules and then run make:
-```
-git submodule update --init --recursive --depth=1
-make
-```
-
-# Flashing with the official updater
-
-* Use the firmware.packed.bin file
-
-# Flashing with [k5prog](https://github.com/piotr022/k5prog)
-
-* ./k5prog -F -YYY -b firmware.bin
-
-# Flashing with SWD
-
-* If you own a JLink or compatible device and want to use the Segger software, you can find a flash loader [here](https://github.com/DualTachyon/dp32g030-flash-loader)
-* If you want to use OpenOCD instead, you can use run "make flash" off this repo.
-* The DP32G030 has flash masking to move the bootloader out of the way. Do not try to flash your own way outside of the above methods or risk losing your bootloader.
-
-# Support
-
-* If you like my work, you can support me through https://ko-fi.com/DualTachyon
-
-# Credits
-
-Many thanks to various people on Telegram for putting up with me during this effort and helping:
-
-* [Mikhail](https://github.com/fagci/)
-* [Andrej](https://github.com/Tunas1337)
-* [Manuel](https://github.com/manujedi)
-* @wagner
-* @Lohtse Shar
-* [@Matoz](https://github.com/spm81)
-* @Davide
-* @Ismo OH2FTG
-* [OneOfEleven](https://github.com/OneOfEleven)
-* and others I forget
-
-# License
-
 Copyright 2023 Dual Tachyon
 https://github.com/DualTachyon
 
