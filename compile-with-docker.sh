@@ -12,4 +12,4 @@ docker build -t "${IMAGE_TAG}" "${SCRIPT_DIR}"
 docker run --rm \
   -v "${OUT_DIR}":/app/compiled-firmware \
   "${IMAGE_TAG}" \
-  /bin/bash -lc "cd /app && make clean && make TARGET=loaner-firmware && cp loaner-firmware*.bin compiled-firmware/"
+  /bin/bash -lc "cd /app && chmod +x ci/run.sh && ./ci/run.sh"
