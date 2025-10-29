@@ -1,34 +1,46 @@
+name: CI
+
 on:
   push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-    - name: arm-none-eabi-gcc
-      uses: carlosperate/arm-none-eabi-gcc-action@v1
-      with:
-        release: '10.3-2021.10'
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Install Python dependencies
-      run: python -m pip install --upgrade pip crcmod
+      - name: Set up ARM toolchain
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: '10.3-2021.10'
 
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Submodules
-      run: git submodule update --init --recursive --depth 1
+      - name: Install Python dependencies
+        run: python -m pip install --upgrade pip crcmod
 
-    - name: Make
-      run:  make
+      - name: Build firmware
+        run: |
+          make clean
+          make TARGET=loaner-firmware
 
-    - name: size
-      run:  arm-none-eabi-size firmware
+      - name: Firmware size
+        run: arm-none-eabi-size loaner-firmware
 
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v3
-      with:
-        name: firmware
-        path: firmware*.bin
-
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: loaner-firmware
+          path: loaner-firmware*.bin
