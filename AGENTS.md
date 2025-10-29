@@ -28,6 +28,17 @@
 - Squash WIP commits before pushing; PR descriptions should call out touched modules, Makefile flags, and validation results.
 - Attach screenshots, logs, or size diffs when behaviour or footprint changes, and list any artifacts (e.g., `loaner-firmware.packed.bin`) that reviewers should test.
 
+## Branching & Release Workflow
+- Create a feature branch for every change (`git checkout -b feature-name`) and never push commits straight to `main`.
+- Open a pull request targeting `main` once the branch is ready; include build/test notes and hardware validation results.
+- When a milestone lands, tag the merge commit (for example `git tag -a v0.3`) and cut a GitHub release that attaches the packed firmware built from that tag.
+- Keep release notes concise: highlight the loaner-facing changes and link the corresponding ICS-205 or CHIRP updates if applicable.
+
+## Versioning Strategy
+- Follow the calendar-semver pattern used by other UV-K5 forks (e.g. Quansheng's `v2.1.27` and Open Edition's `OEFW-2023.09`). Adopt `vYY.MM[.PATCH]` for git tags and releases (for example `v24.03` or `v24.03.1` for hotfixes).
+- The packed firmware metadata keeps the `*OEFW-` prefix for CHIRP compatibility; limit the suffix you pass to `fw-pack.py` to 10 ASCII characters such as `LNR24.03` so the welcome banner reads `OEFW-LNR24.03`.
+- Update the tag, the packed image suffix, and the GitHub release name together so end users and CHIRP all report the same version string.
+
 ## Firmware Configuration Tips
 - Adjust `ENABLE_*` groups in `Makefile` to keep only the features you can fit, and re-run `make clean` before remeasuring size.
 - Introduce new toggles as `ENABLE_FEATURE_NAME`, update the surrounding comment block, and document user-facing switches in `README.md`.
