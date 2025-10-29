@@ -1,43 +1,48 @@
 # UV-K5 Loaner Firmware
-[![Build](https://github.com/aditaa/uv-k5-Loaner-firmware/actions/workflows/main.yml/badge.svg)](https://github.com/aditaa/uv-k5-Loaner-firmware/actions/workflows/main.yml)
+[![Build](https://github.com/aditaa/uv-k5-Loaner-firmware/actions/workflows/main.yaml/badge.svg)](https://github.com/aditaa/uv-k5-Loaner-firmware/actions/workflows/main.yaml)
 
-A stripped-down Quansheng UV-K5/K6 firmware build intended for radios that get passed around as loaners.  
-This fork keeps the core reliability fixes from the community projects while removing advanced features that could let a borrower wander into settings you would rather keep locked down.
+A stripped-down Quansheng UV-K5/K6 firmware build intended for radios that get passed around as loaners. This fork keeps the community reliability fixes while removing configuration rabbit holes so a first-time user can turn the knob, press PTT, and get on the air.
+
+The project also gives COML/COMT staff a predictable path from the ICS-205 form to a radio codeplug: program the memories in CHIRP, flash the loaner binary, and the handset stays aligned with the paperwork.
 
 > **Warning**  
 > Flashing third-party firmware is always at your own risk. Test on non-critical hardware first and confirm RF behaviour before handing units out.
 
 ## Quickstart
-1. Download the latest `loaner-firmware.packed.bin` from the project releases (or build it yourself—see `BUILDING.md`).
+1. Download the latest packed release (`loaner-firmware.packed.bin`) from the Releases page.
 2. With the radio powered off, hold the **PTT** and the **top side key** while turning it on. The display should stay blank, indicating the bootloader is active.
 3. Connect the USB cable, open Quansheng's PC programming tool, select *Firmware Update*, point it at the packed image, and start the transfer.
-4. After the loader reports success, power the radio off and back on to confirm the loaner splash/version string.
+4. After the loader reports success, power the radio off and back on to confirm the welcome screen shows the release tag from the packed image.
+5. Spin the channel knob and verify that the loaner channel names appear as expected.
 
-## Firmware Versioning
-- Update the root `VERSION` file before cutting a release; the build picks up that value automatically (fallbacks still work if a version is supplied on the `make` command line instead).
-- `make` combines `AUTHOR_STRING` and the version token so the welcome screen and UART banner both show something like `LOANER 0.1.0`.
-- `fw-pack.py` embeds the same 16-byte tag inside the packed image, letting web flashers verify the build metadata.
+## Design Goals
+- Put channel-only handsets in the hands of volunteers who have minimal or no radio training.
+- Give COML/COMT staff an efficient way to push an ICS-205 channel plan onto the radios using CHIRP.
+- Track upstream bug fixes while documenting the toggles that keep the loaner build focused and predictable.
 
-## Goals
-- Keep radios in channel-only mode with predictable controls.
-- Ship a clearly branded binary so volunteers know they are flashing the loaner image.
-- Stay close to upstream bug fixes while documenting the custom pieces that matter for the loaner program.
+## Loaner Feature Highlights
+- Channel knob only: the firmware boots into MR mode and ignores attempts to switch into VFO.
+- Hardened menu: configuration items that could drift from the loaner plan are removed or disabled.
+- Friendly prompts: welcome banner, battery indicator, and RSSI display identify the handset as a loaner and keep checks simple.
+- Consistent keypad: digits recall the first ten memories, side buttons select the active VFO, and Menu is locked out.
 
-## Notable Differences From Full Builds
-- VFO access is fully disabled (menu item removed and EEPROM flag forced off).
-- Long-press actions that could restore VFO/MR mode are stripped.
-- Menu layout retains only what is required for the channel-only workflow.
-- Default key text, version strings, and build artifacts are renamed to highlight the loaner focus.
-- Number keys recall the first ten programmed MR channels directly; the legacy F+digit functions are disabled.
-- Side buttons are fixed: the top selects VFO A, the bottom selects VFO B (short or long press).
-- The physical menu key is disabled so borrowers cannot enter configuration screens.
-- Main display always shows channel names instead of raw frequencies.
+## Programming Channel Plans With CHIRP
+This build assumes the channel plan lives on your ICS-205. To move that plan into a radio:
+
+1. Prepare the ICS-205 so each channel has a concise label (CHIRP shows up to seven characters by default).
+2. Launch CHIRP, connect the radio, and use `Radio -> Download From Radio` once to confirm the driver handshake.
+3. Use `File -> Import` to pull in either a CSV exported from your ICS-205 or an existing `.img` template. Map the columns to CHIRP's `Name`, `Frequency`, `Tone Mode`, and `Tone` fields.
+4. Sort the memories into the order that matches your loaner numbering, then `File -> Save As` to keep the template for the next deployment.
+5. Upload the plan with `Radio -> Upload To Radio`. After the radio reboots, rotate the channel knob and verify that the display shows the ICS-205 names.
+6. Repeat for each handset; the standard workflow keeps the handset in channel mode, so operators only see the memories you defined.
+
+Tip: Keep a CHIRP image with the baseline loaner plan in source control so teams can diff changes before distributing updates.
 
 ## Flashing
 ### Quansheng PC Loader (recommended)
 1. Install Quansheng's UV-K5/K6 programming utility if it is not already on your workstation.
-2. Copy `loaner-firmware.packed.bin` locally—the packed image carries the metadata the loader validates.
-3. With the radio powered off, hold **PTT** + **top side key** and power it on to enter the firmware download mode (the screen remains blank).
+2. Copy the packed binary locally - the metadata is required by Quansheng's loader.
+3. With the radio powered off, hold **PTT** + **top side key** and power it on to enter firmware download mode (the screen remains blank).
 4. Connect the USB cable (CH340 driver) and confirm the loader detects the serial port.
 5. Choose *Firmware Update*, select the packed binary, and start the process. Do not disconnect power until the loader reports completion.
 6. Power-cycle the radio and confirm the loaner splash/version text is displayed.
@@ -51,17 +56,16 @@ This fork keeps the core reliability fixes from the community projects while rem
    ```
 4. Use `make debug` afterwards if you need an interactive OpenOCD session.
 
-## Building From Source
-Detailed build and packaging steps now live in `BUILDING.md`. Use that document when you need to regenerate or customize the binaries.
+## Field Notes
+- Carry one handset that stayed stock as a control; it helps confirm the loader steps when training new volunteers.
+- Log which firmware release you flashed (the welcome banner shows the tag) alongside the ICS-205 so future updates are easy to track.
+- If a user reports odd audio or RF behaviour, power cycle and reseat the battery first; the firmware keeps settings read-only so faults are usually hardware.
 
-### Automated Checks
-- `./compile-with-docker.sh` builds with the pinned toolchain and drops binaries under `compiled-firmware/`.
-- `python3 ci/check_firmware.py` fails if code size grows past the loaner budget or if the branding banner changes unexpectedly.
-- `python3 ci/test_chirp.py` confirms CHIRP compatibility. It verifies that the required `ENABLE_*` flags stay enabled, checks that CHIRP’s UV-K5 driver still whitelists the Loaner banner, and exercises the driver against the synthetic EEPROM image in `ci/synthetic_eeprom.bin` to ensure firmware options decode correctly.
+## Need to Modify the Firmware?
+All developer-facing build and packaging details live in `BUILDING.md`. Start there if you need to regenerate binaries or adjust feature toggles.
 
 ## Contributing
-Open issues or PRs if you spot regressions that impact the loaner workflow.  
-When adding optional features, gate them behind new `ENABLE_*` toggles so the default build stays minimal.
+Open issues or PRs if you spot regressions that impact the loaner workflow. Documentation updates (especially CHIRP workflows and loaner field notes) are welcome.
 
 ## Project Backlog Snapshot
 - `docs/issues/issue-export.json` captures the high-level loaner backlog for offline reference.
@@ -71,8 +75,8 @@ When adding optional features, gate them behind new `ENABLE_*` toggles so the de
 Based on the open-source efforts by DualTachyon, OneOfEleven, Fagci, and the wider UV-K5 community. This fork simply repackages their work for the loaner-radio use case.
 
 ## License
-Licensed under the Apache License 2.0. See `LICENSE` for details.
-Copyright 2023 Dual Tachyon
+Licensed under the Apache License 2.0. See `LICENSE` for details.  
+Copyright 2023 Dual Tachyon  
 https://github.com/DualTachyon
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,8 +85,8 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

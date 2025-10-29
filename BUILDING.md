@@ -3,37 +3,66 @@
 This document walks through producing firmware binaries locally or inside the provided Docker wrapper. It mirrors the instructions that formerly lived in `README.md`.
 
 ## Prerequisites
-- ARM GCC 10.3.1 toolchain available on `PATH`.
-- GNU Make.
-- Python 3 with the `crcmod` module (only required for generating the packed image).
-- Optional: Docker (for the reproducible build helper).
+- Docker (recommended path; covers the compiler, python tooling, lint, and tests).
+- For native builds only: ARM GCC 10.3.1 toolchain on `PATH`, GNU Make, Python 3 with `crcmod`, plus optional `cppcheck` and `pytest`.
 
-## Standard Build
-1. From the repository root clean any prior objects so size measurements stay accurate:
+## Docker Build (recommended)
+`./compile-with-docker.sh` produces the most reproducible binaries by packaging the entire toolchain and CI flow inside the container image.
+
+1. From the repository root:
+   ```sh
+   ./compile-with-docker.sh
+   ```
+2. The script builds the Docker image, runs `ci/run.sh` inside the container (cppcheck + pytest + firmware build), and drops artifacts to `compiled-firmware/` on your host:
+   - `compiled-firmware/loaner-firmware.bin`
+   - `compiled-firmware/loaner-firmware.packed.bin`
+
+If the script fails, inspect the console output; lint or unit test failures abort the build so issues are caught before you publish a release.
+
+## Native Build (optional)
+When you already have the toolchain locally, you can mirror the Docker steps:
+
+1. Clean previous objects:
    ```sh
    make clean
    ```
-2. Build the firmware:
+2. Build the firmware (the `TARGET` name controls the output filename):
    ```sh
-   make
+   make TARGET=loaner-firmware
    ```
-   The default target emits `loaner-firmware.bin`. If Python with `crcmod` is installed you will also get `loaner-firmware.packed.bin`.
+   The above command produces `loaner-firmware.bin`. If Python with `crcmod` is installed you will also get `loaner-firmware.packed.bin`.  
+   If you omit `TARGET=...` the files are named `firmware.bin` / `firmware.packed.bin`.
 
 ## Creating a Packed Binary Manually
-If the packed image was not produced automatically, run:
+If the packed image was not produced automatically (for example on a minimal native setup), run:
 ```sh
-python3 fw-pack.py loaner-firmware.bin AUTHOR VERSION loaner-firmware.packed.bin
+python3 fw-pack.py loaner-firmware.bin LOANER-0.2 loaner-firmware.packed.bin
 ```
 
-- Choose a short author tag (defaults to `LOANER`) and a concise version string so the radio UI stays tidy.
-- The packed image is preferred for PC loader flashing because it carries the metadata required by Quansheng’s tool.
+- The second argument is the version tag embedded in both the welcome screen and the packed metadata.  
+  Keep it under 10 ASCII characters (the script rejects longer strings).
+- The packed image is required for PC loader flashing because it carries the metadata Quansheng's tool expects.
 
-## Reproducible Docker Build
-The repo includes a helper that wraps the GCC 10.3.1 toolchain inside Docker:
-```sh
-./compile-with-docker.sh
-```
-Artifacts are written to `compiled-firmware/loaner-firmware*.bin`.
+## Running Lint and Tests
+- `./compile-with-docker.sh` already executes `ci/run.sh`, so every Docker build runs cppcheck, pytest, and the firmware build in one shot.
+- If you are working natively, `ci/run.sh` reproduces the same flow: it runs `cppcheck` with the project's suppressions, executes the Python unit tests, and builds the firmware with `TARGET=loaner-firmware`.
+- To run individual pieces, consult the script for the exact command switches, then invoke:
+  ```sh
+  cppcheck ...        # optional, mirrors the flags in ci/run.sh
+  pytest              # runs tests/test_fw_pack.py
+  make clean
+  make TARGET=loaner-firmware
+  ```
+- Keep an eye on the binary size reported by `arm-none-eabi-size` at the end of the build when you toggle features.
 
 ## Feature Toggles
 Feature flags live near the top of `Makefile` as `ENABLE_*` macros. Adjust them to control optional modules, then rebuild. Run `make clean` before comparing binary size after any toggle changes.
+
+## Firmware Metadata and Releases
+- A successful build leaves you with `firmware.bin` (raw) and, when Python and `crcmod` are available, `firmware.packed.bin`. The packed image is what Quansheng's loader validates.
+- Use `fw-pack.py` to stamp a release tag into the packed image. The second argument becomes the welcome banner and metadata field:
+  ```sh
+  python3 fw-pack.py firmware.bin LOANER-0.2 loaner-firmware.packed.bin
+  ```
+- Change the `TARGET` on the `make` command line to tweak the output filenames without editing source, for example `make TARGET=loaner-firmware`.
+- Before publishing a release, spot-check the welcome screen on hardware to make sure the tag matches what you intend to share with end users.
