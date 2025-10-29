@@ -63,6 +63,10 @@ Detailed build and packaging steps now live in `BUILDING.md`. Use that document 
 Open issues or PRs if you spot regressions that impact the loaner workflow.  
 When adding optional features, gate them behind new `ENABLE_*` toggles so the default build stays minimal.
 
+## Project Backlog Snapshot
+- `docs/issues/issue-export.json` captures the high-level loaner backlog for offline reference.
+- `docs/issues/issues-detailed.json` preserves the matching GitHub issue metadata export.
+
 ## Credits
 Based on the open-source efforts by DualTachyon, OneOfEleven, Fagci, and the wider UV-K5 community. This fork simply repackages their work for the loaner-radio use case.
 
