@@ -101,7 +101,8 @@ void SETTINGS_SaveSettings(void)
 	State[4] = gEeprom.DUAL_WATCH;
 	State[5] = gEeprom.BACKLIGHT;
 	State[6] = gEeprom.TAIL_NOTE_ELIMINATION;
-	State[7] = gEeprom.VFO_OPEN;
+	gEeprom.VFO_OPEN = false;
+	State[7] = false;
 
 	EEPROM_WriteBuffer(0x0E78, State);
 
@@ -267,4 +268,3 @@ void SETTINGS_UpdateChannel(uint8_t Channel, const VFO_Info_t *pVFO, bool bUpdat
 		gMR_ChannelAttributes[Channel] = Attributes;
 	}
 }
-

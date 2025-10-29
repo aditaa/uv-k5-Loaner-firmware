@@ -166,13 +166,28 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 		}
 #endif
 		if (IS_MR_CHANNEL(Channel)) {
-			Channel = RADIO_FindNextChannel(Channel, RADIO_CHANNEL_UP, false, VFO);
-			if (Channel == 0xFF) {
-				Channel = gEeprom.FreqChannel[VFO];
-				gEeprom.ScreenChannel[VFO] = gEeprom.FreqChannel[VFO];
+			uint8_t NextChannel = RADIO_FindNextChannel(Channel, RADIO_CHANNEL_UP, false, VFO);
+
+			if (NextChannel == 0xFF) {
+				if (gEeprom.VFO_OPEN) {
+					Channel = gEeprom.FreqChannel[VFO];
+					gEeprom.ScreenChannel[VFO] = Channel;
+				} else {
+					NextChannel = gEeprom.MrChannel[VFO];
+					if (!IS_MR_CHANNEL(NextChannel) || gMR_ChannelAttributes[NextChannel] == 0xFF) {
+						NextChannel = RADIO_FindNextChannel(MR_CHANNEL_FIRST, RADIO_CHANNEL_UP, false, VFO);
+						if (NextChannel == 0xFF) {
+							NextChannel = MR_CHANNEL_FIRST;
+						}
+					}
+					gEeprom.MrChannel[VFO] = NextChannel;
+					gEeprom.ScreenChannel[VFO] = NextChannel;
+					Channel = NextChannel;
+				}
 			} else {
-				gEeprom.ScreenChannel[VFO] = Channel;
-				gEeprom.MrChannel[VFO] = Channel;
+				gEeprom.ScreenChannel[VFO] = NextChannel;
+				gEeprom.MrChannel[VFO] = NextChannel;
+				Channel = NextChannel;
 			}
 		}
 	} else {
@@ -181,15 +196,25 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 
 	Attributes = gMR_ChannelAttributes[Channel];
 	if (Attributes == 0xFF) {
-		uint8_t Index;
-
 		if (IS_MR_CHANNEL(Channel)) {
-			Channel = gEeprom.FreqChannel[VFO];
-			gEeprom.ScreenChannel[VFO] = gEeprom.FreqChannel[VFO];
+			uint8_t Fallback = RADIO_FindNextChannel(MR_CHANNEL_FIRST, RADIO_CHANNEL_UP, false, VFO);
+
+			if (Fallback != 0xFF && gMR_ChannelAttributes[Fallback] != 0xFF) {
+				Channel = Fallback;
+				gEeprom.ScreenChannel[VFO] = Fallback;
+				gEeprom.MrChannel[VFO] = Fallback;
+				Attributes = gMR_ChannelAttributes[Channel];
+			} else {
+				Channel = gEeprom.FreqChannel[VFO];
+				gEeprom.ScreenChannel[VFO] = Channel;
+			}
 		}
-		Index = Channel - FREQ_CHANNEL_FIRST;
-		RADIO_InitInfo(pRadio, Channel, Index, gLowerLimitFrequencyBandTable[Index]);
-		return;
+		if (Attributes == 0xFF) {
+			uint8_t Index = Channel - FREQ_CHANNEL_FIRST;
+
+			RADIO_InitInfo(pRadio, Channel, Index, gLowerLimitFrequencyBandTable[Index]);
+			return;
+		}
 	}
 
 	Band = Attributes & MR_CH_BAND_MASK;
@@ -853,4 +878,3 @@ void RADIO_SendEndOfTransmission(void)
 	}
 	BK4819_ExitDTMF_TX(true);
 }
-

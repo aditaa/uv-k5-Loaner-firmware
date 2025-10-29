@@ -532,7 +532,7 @@ void BOARD_EEPROM_Init(void)
 	gEeprom.DUAL_WATCH            = (Data[4] < 3) ? Data[4] : DUAL_WATCH_CHAN_A;
 	gEeprom.BACKLIGHT             = (Data[5] < 6) ? Data[5] : 5;
 	gEeprom.TAIL_NOTE_ELIMINATION = (Data[6] < 2) ? Data[6] : true;
-	gEeprom.VFO_OPEN              = (Data[7] < 2) ? Data[7] : true;
+	gEeprom.VFO_OPEN              = false;
 
 	// 0E80..0E87
 	EEPROM_ReadBuffer(0x0E80, Data, 8);
@@ -685,8 +685,10 @@ void BOARD_EEPROM_Init(void)
 	gSetting_350EN          = (Data[5] < 2) ? Data[5] : true;
 	gSetting_ScrambleEnable = (Data[6] < 2) ? Data[6] : true;
 
-	if (!gEeprom.VFO_OPEN) {
+	if (IS_FREQ_CHANNEL(gEeprom.ScreenChannel[0])) {
 		gEeprom.ScreenChannel[0] = gEeprom.MrChannel[0];
+	}
+	if (IS_FREQ_CHANNEL(gEeprom.ScreenChannel[1])) {
 		gEeprom.ScreenChannel[1] = gEeprom.MrChannel[1];
 	}
 
@@ -776,4 +778,3 @@ void BOARD_FactoryReset(bool bIsAll)
 		}
 	}
 }
-
