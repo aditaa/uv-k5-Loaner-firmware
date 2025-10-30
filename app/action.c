@@ -32,22 +32,6 @@
 #include "ui/inputbox.h"
 #include "ui/ui.h"
 
-static void ACTION_FlashLight(void)
-{
-	switch (gFlashLightState) {
-	case 0:
-		gFlashLightState++;
-		GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_FLASHLIGHT);
-		break;
-	case 1:
-		gFlashLightState++;
-		break;
-	default:
-		gFlashLightState = 0;
-		GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_FLASHLIGHT);
-	}
-}
-
 void ACTION_Power(void)
 {
 	if (++gTxVfo->OUTPUT_POWER > OUTPUT_POWER_HIGH) {
@@ -57,43 +41,6 @@ void ACTION_Power(void)
 	gRequestSaveChannel = 1;
 	gAnotherVoiceID = VOICE_ID_POWER;
 	gRequestDisplayScreen = gScreenToDisplay;
-}
-
-static void ACTION_Monitor(void)
-{
-	if (gCurrentFunction != FUNCTION_MONITOR) {
-		RADIO_SelectVfos();
-#if defined(ENABLE_NOAA)
-		if (gRxVfo->CHANNEL_SAVE >= NOAA_CHANNEL_FIRST && gIsNoaaMode) {
-			gNoaaChannel = gRxVfo->CHANNEL_SAVE - NOAA_CHANNEL_FIRST;
-		}
-#endif
-		RADIO_SetupRegisters(true);
-		APP_StartListening(FUNCTION_MONITOR);
-		return;
-	}
-	if (gScanState != SCAN_OFF) {
-		ScanPauseDelayIn10msec = 500;
-		gScheduleScanListen = false;
-		gScanPauseMode = true;
-	}
-#if defined(ENABLE_NOAA)
-	if (gEeprom.DUAL_WATCH == DUAL_WATCH_OFF && gIsNoaaMode) {
-		gNOAA_Countdown = 500;
-		gScheduleNOAA = false;
-	}
-#endif
-	RADIO_SetupRegisters(true);
-#if defined(ENABLE_FMRADIO)
-	if (gFmRadioMode) {
-		FM_Start();
-		gRequestDisplayScreen = DISPLAY_FM;
-	} else {
-#endif
-		gRequestDisplayScreen = gScreenToDisplay;
-#if defined(ENABLE_FMRADIO)
-	}
-#endif
 }
 
 void ACTION_Scan(bool bRestart)
@@ -150,27 +97,44 @@ void ACTION_Vox(void)
 	gUpdateStatus = true;
 }
 
-#if defined(ENABLE_ALARM) || defined(ENABLE_TX1750)
-static void ACTION_AlarmOr1750(bool b1750)
+static void ACTION_SelectVfo(uint8_t Target)
 {
-	gInputBoxIndex = 0;
-#if defined(ENABLE_ALARM) && defined(ENABLE_TX1750)
-	if (b1750) {
-		gAlarmState = ALARM_STATE_TX1750;
-	} else {
-		gAlarmState = ALARM_STATE_TXALARM;
+	if (Target > 1) {
+		return;
 	}
-	gAlarmRunningCounter = 0;
-#elif defined(ENABLE_ALARM)
-	gAlarmState = ALARM_STATE_TXALARM;
-	gAlarmRunningCounter = 0;
-#else
-	gAlarmState = ALARM_STATE_TX1750;
-#endif
-	gFlagPrepareTX = true;
+
+	if (gScanState != SCAN_OFF) {
+		SCANNER_Stop();
+		gAnotherVoiceID = VOICE_ID_SCANNING_STOP;
+	}
+
+	gWasFKeyPressed = false;
+	gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
+	gEeprom.DUAL_WATCH = DUAL_WATCH_OFF;
+
+	if (gEeprom.TX_VFO == Target && gEeprom.RX_VFO == Target) {
+		gRequestDisplayScreen = DISPLAY_MAIN;
+		gUpdateStatus = true;
+		return;
+	}
+
+	gEeprom.TX_VFO = Target;
+	gEeprom.RX_VFO = Target;
+	gTxVfo = &gEeprom.VfoInfo[Target];
+	gRxVfo = &gEeprom.VfoInfo[Target];
+
+	gRequestSaveVFO = true;
+	gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
+	gFlagResetVfos = true;
+	gFlagReconfigureVfos = true;
+	gUpdateStatus = true;
 	gRequestDisplayScreen = DISPLAY_MAIN;
+	if (IS_MR_CHANNEL(gEeprom.ScreenChannel[Target])) {
+		AUDIO_SetVoiceID(0, VOICE_ID_CHANNEL_MODE);
+		AUDIO_SetDigitVoice(1, gEeprom.ScreenChannel[Target] + 1);
+		gAnotherVoiceID = (VOICE_ID_t)0xFE;
+	}
 }
-#endif
 
 #if defined(ENABLE_FMRADIO)
 void ACTION_FM(void)
@@ -195,8 +159,7 @@ void ACTION_FM(void)
 
 void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 {
-	uint8_t Short;
-	uint8_t Long;
+	uint8_t Target;
 
 	if (gScreenToDisplay == DISPLAY_MAIN && gDTMF_InputMode) {
 		if (Key == KEY_SIDE1 && !bKeyHeld && bKeyPressed) {
@@ -218,57 +181,15 @@ void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 		return;
 	}
 
-	if (Key == KEY_SIDE1) {
-		Short = gEeprom.KEY_1_SHORT_PRESS_ACTION;
-		Long = gEeprom.KEY_1_LONG_PRESS_ACTION;
-	} else {
-		Short = gEeprom.KEY_2_SHORT_PRESS_ACTION;
-		Long = gEeprom.KEY_2_LONG_PRESS_ACTION;
-	}
-	if (!bKeyHeld && bKeyPressed) {
-		gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+	if (Key == KEY_SIDE1 || Key == KEY_SIDE2) {
+		Target = (Key == KEY_SIDE1) ? 0 : 1;
+		if (!bKeyHeld && bKeyPressed) {
+			gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+			return;
+		}
+		if (!bKeyPressed) {
+			ACTION_SelectVfo(Target);
+		}
 		return;
 	}
-	if (bKeyHeld || bKeyPressed) {
-		if (!bKeyHeld) {
-			return;
-		}
-		Short = Long;
-		if (!bKeyPressed) {
-			return;
-		}
-	}
-	switch (Short) {
-	case 1:
-		ACTION_FlashLight();
-		break;
-	case 2:
-		ACTION_Power();
-		break;
-	case 3:
-		ACTION_Monitor();
-		break;
-	case 4:
-		ACTION_Scan(true);
-		break;
-	case 5:
-		ACTION_Vox();
-		break;
-	case 6:
-#if defined(ENABLE_ALARM)
-		ACTION_AlarmOr1750(false);
-#endif
-		break;
-	case 7:
-#if defined(ENABLE_FMRADIO)
-		ACTION_FM();
-#endif
-		break;
-	case 8:
-#if defined(ENABLE_TX1750)
-		ACTION_AlarmOr1750(true);
-#endif
-		break;
-	}
 }
-
