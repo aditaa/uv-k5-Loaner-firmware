@@ -7,6 +7,8 @@ IMAGE_TAG="uvk5-loaner"
 
 mkdir -p "${OUT_DIR}"
 
+rm -f "${OUT_DIR}"/loaner-firmware*.bin
+
 docker build -t "${IMAGE_TAG}" "${SCRIPT_DIR}"
 
 docker run --rm \
