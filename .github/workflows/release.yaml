@@ -34,3 +34,5 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "compiled-firmware/loaner-firmware*.bin"
+          allowUpdates: true
+          prerelease: true
