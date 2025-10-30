@@ -1400,6 +1400,20 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 		return;
 	}
 
+	if (Key == KEY_MENU) {
+		if (!bKeyPressed) {
+			return;
+		}
+		if (gWasFKeyPressed) {
+			gWasFKeyPressed = false;
+			gUpdateStatus = true;
+		}
+		if (!bKeyHeld) {
+			gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+		}
+		goto Skip;
+	}
+
 	bFlag = false;
 
 	if (gPttWasPressed && Key == KEY_PTT) {

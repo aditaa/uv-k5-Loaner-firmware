@@ -5,6 +5,7 @@ ROOT="/app"
 ARTIFACT_DIR="${ROOT}/compiled-firmware"
 
 mkdir -p "${ARTIFACT_DIR}"
+rm -f "${ARTIFACT_DIR}"/loaner-firmware*.bin
 
 echo "Running cppcheck lint..."
 cppcheck \
