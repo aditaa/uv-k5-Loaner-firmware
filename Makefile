@@ -115,6 +115,22 @@ SIZE = arm-none-eabi-size
 
 GIT_HASH := $(shell git rev-parse --short HEAD)
 
+VERSION_SUFFIX ?= $(shell git describe --tags --match 'LNR*' --abbrev=0 2>/dev/null)
+
+ifeq ($(MAKECMDGOALS),)
+  ifeq ($(strip $(VERSION_SUFFIX)),)
+    $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or create an LNR* tag.)
+  endif
+else
+  ifneq ($(filter-out clean,$(MAKECMDGOALS)),)
+    ifeq ($(strip $(VERSION_SUFFIX)),)
+      $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or create an LNR* tag.)
+    endif
+  endif
+endif
+
+VERSION_SUFFIX_ESCAPED := $(subst ",\",$(VERSION_SUFFIX))
+
 ASFLAGS = -c -mcpu=cortex-m0
 ifeq ($(ENABLE_OVERLAY),1)
 ASFLAGS += -DENABLE_OVERLAY
@@ -122,6 +138,7 @@ endif
 CFLAGS = -Os -Wall -Werror -mcpu=cortex-m0 -fno-builtin -fshort-enums -fno-delete-null-pointer-checks -std=c11 -MMD
 CFLAGS += -DPRINTF_INCLUDE_CONFIG_H
 CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
+CFLAGS += -DVERSION_SUFFIX=\"$(VERSION_SUFFIX_ESCAPED)\"
 ifeq ($(ENABLE_AIRCOPY),1)
 CFLAGS += -DENABLE_AIRCOPY
 endif
@@ -165,8 +182,8 @@ DEPS = $(OBJS:.o=.d)
 
 all: $(TARGET)
 	$(OBJCOPY) -O binary $< $<.bin
-	-python fw-pack.py $<.bin $(GIT_HASH) $<.packed.bin
-	-python3 fw-pack.py $<.bin $(GIT_HASH) $<.packed.bin
+	-python fw-pack.py $<.bin $(VERSION_SUFFIX) $<.packed.bin
+	-python3 fw-pack.py $<.bin $(VERSION_SUFFIX) $<.packed.bin
 	$(SIZE) $<
 
 debug:
@@ -194,4 +211,3 @@ bsp/dp32g030/%.h: hardware/dp32g030/%.def
 
 clean:
 	rm -f $(TARGET).bin $(TARGET).packed.bin $(TARGET) $(OBJS) $(DEPS)
-

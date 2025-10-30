@@ -36,6 +36,8 @@ This build assumes the channel plan lives on your ICS-205. To move that plan int
 5. Upload the plan with `Radio -> Upload To Radio`. After the radio reboots, rotate the channel knob and verify that the display shows the ICS-205 names.
 6. Repeat for each handset; the standard workflow keeps the handset in channel mode, so operators only see the memories you defined.
 
+Use a CHIRP build that includes the UV-K5 loaner whitelist from PR #1414 (or any newer release); older builds will block uploads because they do not recognise the `OEFW-LNR` banner yet.
+
 Tip: Keep a CHIRP image with the baseline loaner plan in source control so teams can diff changes before distributing updates.
 
 ## Flashing

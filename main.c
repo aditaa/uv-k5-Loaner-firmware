@@ -37,8 +37,12 @@
 #include "ui/lock.h"
 #include "ui/welcome.h"
 
+#ifndef VERSION_SUFFIX
+#define VERSION_SUFFIX GIT_HASH
+#endif
+
 #if defined(ENABLE_UART)
-static const char Version[] = "UV-K5 Firmware, Open Edition, OEFW-"GIT_HASH"\r\n";
+static const char Version[] = "UV-K5 Firmware, Open Edition, OEFW-" VERSION_SUFFIX "\r\n";
 #endif
 
 void _putchar(char c)
@@ -149,4 +153,3 @@ void Main(void)
 		}
 	}
 }
-
