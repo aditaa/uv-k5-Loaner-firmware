@@ -236,7 +236,7 @@ void UI_DisplayMain(void)
 			if (gInputBoxIndex && IS_FREQ_CHANNEL(gEeprom.ScreenChannel[i]) && gEeprom.TX_VFO == i) {
 				UI_DisplayFrequency(gInputBox, 31, i * 4, true, false);
 			} else {
-				if (!IS_MR_CHANNEL(gEeprom.ScreenChannel[i]) || gEeprom.CHANNEL_DISPLAY_MODE == MDF_FREQUENCY) {
+				if (!IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
 					if (gCurrentFunction == FUNCTION_TRANSMIT) {
 						if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
 							Channel = gEeprom.RX_VFO;
@@ -262,16 +262,16 @@ void UI_DisplayMain(void)
 						}
 					}
 					UI_DisplaySmallDigits(2, String + 6, 112, Line + 1);
-				} else if (gEeprom.CHANNEL_DISPLAY_MODE == MDF_CHANNEL) {
-					sprintf(String, "CH-%03d", gEeprom.ScreenChannel[i] + 1);
-					UI_PrintString(String, 31, 112, i * 4, 8, true);
-				} else if (gEeprom.CHANNEL_DISPLAY_MODE == MDF_NAME) {
-					if(gEeprom.VfoInfo[i].Name[0] == 0 || gEeprom.VfoInfo[i].Name[0] == 0xFF) {
+				} else {
+					const char *pName = gEeprom.VfoInfo[i].Name;
+					if (pName[0] == 0 || pName[0] == (char)0xFF) {
 						sprintf(String, "CH-%03d", gEeprom.ScreenChannel[i] + 1);
 						UI_PrintString(String, 31, 112, i * 4, 8, true);
 					} else {
-						UI_PrintString(gEeprom.VfoInfo[i].Name, 31, 112, i * 4, 8, true);
+						UI_PrintString(pName, 31, 112, i * 4, 8, true);
 					}
+					NUMBER_ToDigits(gEeprom.ScreenChannel[i] + 1, String);
+					UI_DisplaySmallDigits(3, String + 5, 112, Line + 1);
 				}
 			}
 		}
@@ -377,4 +377,3 @@ void UI_DisplayMain(void)
 
 	ST7565_BlitFullScreen();
 }
-
