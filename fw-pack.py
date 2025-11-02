@@ -4,7 +4,6 @@ import crcmod
 import sys
 
 from itertools import cycle
-from binascii import hexlify
 
 OBFUSCATION = [
         0x47, 0x22, 0xC0, 0x52, 0x5D, 0x57, 0x48, 0x94, 0xB1, 0x60, 0x60, 0xDB, 0x6F, 0xE3, 0x4C, 0x7C,
@@ -37,4 +36,3 @@ digest = crc.digest()
 digest = bytes([digest[1], digest[0]])
 
 open(sys.argv[3], 'wb').write(packed + digest)
-

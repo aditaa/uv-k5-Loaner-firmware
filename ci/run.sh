@@ -1,46 +1,59 @@
 #!/bin/bash
 set -euo pipefail
 
-ROOT="/app"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ARTIFACT_DIR="${ROOT}/compiled-firmware"
+MODE="${CI_MODE:-full}"
+
+cd "${ROOT}"
+
+run_cppcheck() {
+	echo "Running cppcheck lint..."
+	cppcheck \
+		--enable=warning,style \
+		--std=c11 \
+		--inline-suppr \
+		--error-exitcode=1 \
+		--suppress=missingIncludeSystem \
+		--suppress=unmatchedSuppression \
+		--suppress=unusedFunction \
+		--suppress=invalidPrintfArgType_sint \
+		--suppress=variableScope \
+		--suppress=unsignedPositive \
+		--suppress=badBitmaskCheck \
+		--suppress=unusedStructMember \
+		--suppress=constParameterPointer \
+		--suppress=oppositeInnerCondition \
+		--suppress=normalCheckLevelMaxBranches \
+		--quiet \
+		"${ROOT}/app" \
+		"${ROOT}/audio.c" \
+		"${ROOT}/bitmaps.c" \
+		"${ROOT}/board.c" \
+		"${ROOT}/dcs.c" \
+		"${ROOT}/driver" \
+		"${ROOT}/functions.c" \
+		"${ROOT}/helper" \
+		"${ROOT}/misc.c" \
+		"${ROOT}/radio.c" \
+		"${ROOT}/scheduler.c" \
+		"${ROOT}/settings.c" \
+		"${ROOT}/ui" \
+		"${ROOT}/version.c"
+}
+
+if [[ "${MODE}" == "cppcheck" ]]; then
+	run_cppcheck
+	exit 0
+fi
 
 : "${VERSION_SUFFIX:?VERSION_SUFFIX is required (set VERSION_SUFFIX=LNR24B1 before running this script)}"
 
 mkdir -p "${ARTIFACT_DIR}"
 rm -f "${ARTIFACT_DIR}"/loaner-firmware*.bin
 
-echo "Running cppcheck lint..."
-cppcheck \
-  --enable=warning,style \
-  --std=c11 \
-  --inline-suppr \
-  --error-exitcode=1 \
-  --suppress=missingIncludeSystem \
-  --suppress=unmatchedSuppression \
-  --suppress=unusedFunction \
-  --suppress=invalidPrintfArgType_sint \
-  --suppress=variableScope \
-  --suppress=unsignedPositive \
-  --suppress=badBitmaskCheck \
-  --suppress=unusedStructMember \
-  --suppress=constParameterPointer \
-  --suppress=oppositeInnerCondition \
-  --suppress=normalCheckLevelMaxBranches \
-  --quiet \
-  ${ROOT}/app \
-  ${ROOT}/audio.c \
-  ${ROOT}/bitmaps.c \
-  ${ROOT}/board.c \
-  ${ROOT}/dcs.c \
-  ${ROOT}/driver \
-  ${ROOT}/functions.c \
-  ${ROOT}/helper \
-  ${ROOT}/misc.c \
-  ${ROOT}/radio.c \
-  ${ROOT}/scheduler.c \
-  ${ROOT}/settings.c \
-  ${ROOT}/ui \
-  ${ROOT}/version.c
+run_cppcheck
 
 echo "Running unit tests..."
 pytest -q

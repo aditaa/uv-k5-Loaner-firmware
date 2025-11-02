@@ -46,7 +46,12 @@ python3 fw-pack.py loaner-firmware.bin LNR24B1 loaner-firmware.packed.bin
 
 ## Running Lint and Tests
 - `./compile-with-docker.sh` already executes `ci/run.sh`, so every Docker build runs cppcheck, pytest, and the firmware build in one shot.
-- If you are working natively, `ci/run.sh` reproduces the same flow: it runs `cppcheck` with the project's suppressions, executes the Python unit tests, and builds the firmware with `TARGET=loaner-firmware`.
+- GitHub Actions runs dedicated lint stages before building: a style job (`ruff` over the Python tooling and `shellcheck` over the scripts) followed by a `cppcheck` job on the C sources. Fix issues reported there before kicking off full builds.
+- If you are working natively, `ci/run.sh` reproduces the same flow once the dependencies are installed (see the Dockerfile for the package list). Run it with the same suffix to mirror CI:
+  ```sh
+  VERSION_SUFFIX=LNR24B1 ./ci/run.sh
+  ```
+- GitHub Actions runs `pytest` under Python 3.10 and 3.12 before the Docker build; keep tests compatible with both versions.
 - To run individual pieces, consult the script for the exact command switches, then invoke:
   ```sh
   cppcheck ...        # optional, mirrors the flags in ci/run.sh
@@ -74,6 +79,7 @@ Feature flags live near the top of `Makefile` as `ENABLE_*` macros. Adjust them 
 ## Release Versioning Checklist
 Follow this sequence for every tagged release:
 
+0. **Create a release branch**: Start from `main` and branch before making release edits (for example `git checkout -b release/LNR24B1`). All commits should land via a merge request.
 1. **Pick a suffix**: Choose a 10-character-or-shorter identifier in the form `LNRYYxN` (for example `LNR24B1`). The suffix should line up with the git tag you plan to publish (for example `v24.12`).
 2. **Export the suffix** so every build step sees the same value:
    ```sh
@@ -91,6 +97,7 @@ Follow this sequence for every tagged release:
    make TARGET=loaner-firmware VERSION_SUFFIX=LNR24B1
    pytest -q
    ```
+   Either path should pass without warnings; capture the output for the merge request description.
 4. **Validate on hardware**: Flash the packed image and confirm the radio splash reports `OEFW-LNR24B1`.
 5. **Tag the release** using the calendar semantic scheme:
    ```sh
