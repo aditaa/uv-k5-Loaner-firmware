@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT="/app"
 ARTIFACT_DIR="${ROOT}/compiled-firmware"
 
+: "${VERSION_SUFFIX:?VERSION_SUFFIX is required (set VERSION_SUFFIX=LNR24B1 before running this script)}"
+
 mkdir -p "${ARTIFACT_DIR}"
 rm -f "${ARTIFACT_DIR}"/loaner-firmware*.bin
 
