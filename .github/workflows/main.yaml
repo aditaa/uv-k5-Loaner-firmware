@@ -7,16 +7,93 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      version_suffix:
+        description: 'Release VERSION_SUFFIX (e.g. LNR24B1). Required when manually triggering.'
+        required: false
 
 jobs:
+  style:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install linters
+        run: |
+          python -m pip install --upgrade pip ruff==0.5.6
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Ruff (pyflakes)
+        run: python -m ruff check fw-pack.py tests
+
+      - name: Shellcheck
+        run: shellcheck compile-with-docker.sh ci/run.sh
+
+  cppcheck:
+    runs-on: ubuntu-22.04
+    needs: style
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck
+        run: CI_MODE=cppcheck ./ci/run.sh
+
+  python-tests:
+    runs-on: ubuntu-22.04
+    needs: [style, cppcheck]
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest crcmod
+
+      - name: Run pytest
+        run: pytest -q
+
   build:
     runs-on: ubuntu-22.04
+    needs: [python-tests, cppcheck]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Derive version suffix
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            if [[ -z "${{ github.event.inputs.version_suffix }}" ]]; then
+              echo "VERSION_SUFFIX input is required when running manually" >&2
+              exit 1
+            fi
+            echo "VERSION_SUFFIX=${{ github.event.inputs.version_suffix }}" >> "$GITHUB_ENV"
+          else
+            echo "VERSION_SUFFIX=CI${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          fi
 
       - name: Build firmware (Docker)
         run: ./compile-with-docker.sh
@@ -26,6 +103,7 @@ jobs:
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
         with:
           name: loaner-firmware
           path: compiled-firmware/loaner-firmware*.bin

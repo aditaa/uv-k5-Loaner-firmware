@@ -163,7 +163,7 @@ uint8_t gIsLocked = 0xFF;
 
 // --------
 
-void NUMBER_Get(char *pDigits, uint32_t *pInteger)
+void NUMBER_Get(const char *pDigits, uint32_t *pInteger)
 {
 	uint32_t Value;
 	uint32_t Multiplier;
@@ -206,4 +206,3 @@ uint8_t NUMBER_AddWithWraparound(uint8_t Base, int8_t Add, uint8_t LowerLimit, u
 
 	return Base;
 }
-
