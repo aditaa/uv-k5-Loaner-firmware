@@ -37,9 +37,26 @@ jobs:
       - name: Shellcheck
         run: shellcheck compile-with-docker.sh ci/run.sh
 
-  cppcheck:
+  clang-format:
     runs-on: ubuntu-22.04
     needs: style
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: ci/check-clang-format.sh
+
+  cppcheck:
+    runs-on: ubuntu-22.04
+    needs: [style, clang-format]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,7 +71,7 @@ jobs:
 
   python-tests:
     runs-on: ubuntu-22.04
-    needs: [style, cppcheck]
+    needs: [style, clang-format, cppcheck]
     strategy:
       matrix:
         python-version: ['3.10', '3.12']

@@ -46,7 +46,11 @@ python3 fw-pack.py loaner-firmware.bin LNR24B1 loaner-firmware.packed.bin
 
 ## Running Lint and Tests
 - `./compile-with-docker.sh` already executes `ci/run.sh`, so every Docker build runs cppcheck, pytest, and the firmware build in one shot.
-- GitHub Actions runs dedicated lint stages before building: a style job (`ruff` over the Python tooling and `shellcheck` over the scripts) followed by a `cppcheck` job on the C sources. Fix issues reported there before kicking off full builds.
+<<<<<<< HEAD
+- GitHub Actions runs dedicated lint stages before building: a style job (`ruff` over the Python tooling and `shellcheck` over the scripts), a `clang-format` diff check on C/C++ changes, and a `cppcheck` pass on the firmware sources. Fix issues reported there before kicking off full builds. To run the format check locally, export the same diff and pipe it into `clang-format-diff -p1`.
+=======
+- GitHub Actions runs dedicated lint stages before building: a style job (`ruff` over the Python tooling and `shellcheck` over the scripts), a `clang-format` diff check on C/C++ changes, and a `cppcheck` pass on the firmware sources. Fix issues reported there before kicking off full builds. To run the format check locally, export the same diff and pipe it into `clang-format-diff -p1`.
+>>>>>>> 633c3bb (Document branch workflow and local test commands)
 - If you are working natively, `ci/run.sh` reproduces the same flow once the dependencies are installed (see the Dockerfile for the package list). Run it with the same suffix to mirror CI:
   ```sh
   VERSION_SUFFIX=LNR24B1 ./ci/run.sh
@@ -97,7 +101,11 @@ Follow this sequence for every tagged release:
    make TARGET=loaner-firmware VERSION_SUFFIX=LNR24B1
    pytest -q
    ```
-   Either path should pass without warnings; capture the output for the merge request description.
+<<<<<<< HEAD
+   Either path should pass without warnings; capture the output for the merge request description. Confirm the printed firmware size stays below the configured limit (`MAX_FIRMWARE_SIZE`, default 122 880 bytes) so there is margin for future changes.
+=======
+   Either path should pass without warnings; capture the output for the merge request description. Confirm the printed firmware size stays below the configured limit (`MAX_FIRMWARE_SIZE`, default 122 880 bytes) so there is margin for future changes.
+>>>>>>> 633c3bb (Document branch workflow and local test commands)
 4. **Validate on hardware**: Flash the packed image and confirm the radio splash reports `OEFW-LNR24B1`.
 5. **Tag the release** using the calendar semantic scheme:
    ```sh

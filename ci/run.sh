@@ -62,4 +62,13 @@ echo "Building firmware..."
 make clean
 make TARGET=loaner-firmware
 
+BIN_SIZE=$(stat --format="%s" loaner-firmware.bin)
+MAX_SIZE=${MAX_FIRMWARE_SIZE:-122880}
+if (( BIN_SIZE > MAX_SIZE )); then
+	echo "Firmware size ${BIN_SIZE} bytes exceeds limit ${MAX_SIZE} bytes" >&2
+	exit 1
+fi
+
+echo "Firmware size: ${BIN_SIZE} bytes (limit ${MAX_SIZE})"
+
 cp loaner-firmware*.bin "${ARTIFACT_DIR}/"
