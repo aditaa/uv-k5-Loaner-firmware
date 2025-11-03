@@ -66,7 +66,7 @@ python3 fw-pack.py loaner-firmware.bin LNR24B1 loaner-firmware.packed.bin
 - Keep an eye on the binary size reported by `arm-none-eabi-size` at the end of the build when you toggle features.
 
 ## Feature Toggles
-Feature flags live near the top of `Makefile` as `ENABLE_*` macros. Adjust them to control optional modules, then rebuild. Run `make clean` before comparing binary size after any toggle changes.
+Feature flags live near the top of `Makefile` as `ENABLE_*` macros. The loaner build keeps the optional blocks (`AIRCOPY`, `ALARM`, `FMRADIO`, `NOAA`, `TX1750`, and the SRAM overlay) disabled by default to shrink the binary and hide extra menus. Adjust the macros if you need those features, then run `make clean` before comparing binary size after any toggle changes.
 
 ## Firmware Metadata and Releases
 - A successful build leaves you with `firmware.bin` (raw) and, when Python and `crcmod` are available, `firmware.packed.bin`. The packed image is what Quansheng's loader validates.
