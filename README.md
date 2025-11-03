@@ -25,6 +25,7 @@ The project also gives COML/COMT staff a predictable path from the ICS-205 form 
 - Hardened menu: configuration items that could drift from the loaner plan are removed or disabled.
 - Friendly prompts: welcome banner, battery indicator, and RSSI display identify the handset as a loaner and keep checks simple.
 - Consistent keypad: digits recall the first ten memories, side buttons select the active VFO, and Menu is locked out.
+- Lean feature set: Aircopy, FM broadcast, NOAA weather, the 1750 Hz tone burst, and the general alarm are compiled out so the UI stays focused on assigned channels and the binary remains compact.
 
 ## Programming Channel Plans With CHIRP
 This build assumes the channel plan lives on your ICS-205. To move that plan into a radio:
