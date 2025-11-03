@@ -18,6 +18,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Derive version suffix
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          SUFFIX="LNR${TAG}"
+          echo "Using VERSION_SUFFIX=${SUFFIX}"
+          echo "VERSION_SUFFIX=${SUFFIX}" >> "$GITHUB_ENV"
+
       - name: Build firmware (Docker)
         run: ./compile-with-docker.sh
 
@@ -35,4 +42,4 @@ jobs:
         with:
           artifacts: "compiled-firmware/loaner-firmware*.bin"
           allowUpdates: true
-          prerelease: true
+          prerelease: false
