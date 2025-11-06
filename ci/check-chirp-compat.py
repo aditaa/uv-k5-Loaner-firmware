@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import importlib.util
 import os
 import re
 import sys
@@ -7,17 +6,12 @@ from pathlib import Path
 
 
 def load_uvk5_module(chirp_root: Path):
-    module_path = chirp_root / "chirp" / "drivers" / "uvk5.py"
-    if not module_path.exists():
-        raise FileNotFoundError(f"Cannot find uvk5.py at {module_path}")
-
-    spec = importlib.util.spec_from_file_location("chirp.drivers.uvk5", module_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError("Unable to load chirp.drivers.uvk5 module")
-
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    sys.path.insert(0, str(chirp_root))
+    try:
+        import chirp.drivers.uvk5 as uvk5  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(f"Unable to import chirp.drivers.uvk5: {exc}") from exc
+    return uvk5
 
 
 def check_memory_bounds(misc_path: Path):
@@ -74,9 +68,40 @@ def main():
 
     firmware_root = Path(__file__).resolve().parents[1]
     check_memory_bounds(firmware_root / "misc.h")
+    exercise_driver(module, chirp_root)
 
-    print(f"CHIRP accepts firmware banner '{banner}' and memory bounds look OK.")
+    print(f"CHIRP accepts firmware banner '{banner}' and driver tests passed.")
 
 
 if __name__ == "__main__":
     main()
+def exercise_driver(module, chirp_root: Path):
+    from chirp import chirp_common, errors, bitwise  # type: ignore
+
+    image_paths = [
+        chirp_root / "tests" / "images" / "uvk5.img",
+        chirp_root / "tests" / "images" / "UV-K5.img",
+    ]
+    image_path = next((p for p in image_paths if p.exists()), None)
+    if image_path is None:
+        raise FileNotFoundError("Unable to locate a sample UV-K5 image under tests/images")
+
+    raw = bytearray(image_path.read_bytes())
+
+    radio = module.UVK5Radio()
+    radio._mmap = raw
+    radio._memobj = bitwise.parse(module.MEM_FORMAT, radio._mmap)
+
+    mem = radio.get_memory(1)
+    mem.name = "CI-CHECK"
+    radio.set_memory(mem)
+
+    failing = chirp_common.Memory()
+    failing.number = 250
+    failing.empty = False
+
+    try:
+        radio.set_memory(failing)
+        raise RuntimeError("CHIRP accepted channel 250; memory bounds may be misaligned")
+    except errors.RadioError:
+        pass
