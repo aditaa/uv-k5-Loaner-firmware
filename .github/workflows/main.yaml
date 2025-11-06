@@ -69,9 +69,26 @@ jobs:
       - name: Run cppcheck
         run: CI_MODE=cppcheck ./ci/run.sh
 
-  python-tests:
+  chirp-compat:
     runs-on: ubuntu-22.04
     needs: [style, clang-format, cppcheck]
+    env:
+      CHIRP_REPO: https://github.com/aditaa/chirp.git
+      CHIRP_REF: loaner-firmware-whitelist
+      COMPAT_SUFFIX: LNR24.12.1
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Clone CHIRP sources
+        run: git clone --depth 1 --branch "$CHIRP_REF" "$CHIRP_REPO" chirp-src
+
+      - name: Verify CHIRP compatibility
+        run: python3 ci/check-chirp-compat.py chirp-src
+
+  python-tests:
+    runs-on: ubuntu-22.04
+    needs: [style, clang-format, cppcheck, chirp-compat]
     strategy:
       matrix:
         python-version: ['3.10', '3.12']
@@ -92,7 +109,7 @@ jobs:
 
   build:
     runs-on: ubuntu-22.04
-    needs: [python-tests, cppcheck]
+    needs: [python-tests, cppcheck, chirp-compat]
 
     steps:
       - name: Checkout
