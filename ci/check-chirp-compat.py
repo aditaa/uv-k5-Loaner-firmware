@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import importlib.util
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -17,6 +18,36 @@ def load_uvk5_module(chirp_root: Path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def check_memory_bounds(misc_path: Path):
+    data = misc_path.read_text()
+
+    def extract(name: str) -> int:
+        match = re.search(rf"{name} = (\d+)U", data)
+        if not match:
+            raise RuntimeError(f"Unable to locate {name} in {misc_path}")
+        return int(match.group(1))
+
+    mr_last = extract("MR_CHANNEL_LAST")
+    freq_first = extract("FREQ_CHANNEL_FIRST")
+    last_channel = extract("LAST_CHANNEL")
+
+    if mr_last != 199:
+        raise RuntimeError(
+            f"Firmware MR channel bound is {mr_last}, expected 199. "
+            "Updating this constant will desynchronise CHIRP's memory map."
+        )
+
+    if freq_first != 200:
+        raise RuntimeError(
+            f"Firmware VFO channel start is {freq_first}, expected 200."
+        )
+
+    if last_channel < 207:
+        raise RuntimeError(
+            f"Firmware LAST_CHANNEL is {last_channel}, expected at least 207."
+        )
 
 
 def main():
@@ -41,7 +72,10 @@ def main():
         )
         sys.exit(1)
 
-    print(f"CHIRP accepts firmware banner '{banner}'.")
+    firmware_root = Path(__file__).resolve().parents[1]
+    check_memory_bounds(firmware_root / "misc.h")
+
+    print(f"CHIRP accepts firmware banner '{banner}' and memory bounds look OK.")
 
 
 if __name__ == "__main__":
