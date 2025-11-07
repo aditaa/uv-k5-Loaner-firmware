@@ -105,3 +105,19 @@ def exercise_driver(module, chirp_root: Path):
         raise RuntimeError("CHIRP accepted channel 250; memory bounds may be misaligned")
     except errors.RadioError:
         pass
+
+    settings = radio.get_settings()
+    mutations = {
+        "ch1call": lambda rs: rs.value.set_value(5),
+        "noaaautoscan": lambda rs: rs.value.set_value(True),
+        "scan1en": lambda rs: rs.value.set_value("On"),
+        "locktx": lambda rs: rs.value.set_value(True),
+    }
+
+    for key, mut in mutations.items():
+        rs = settings.get_setting(key)
+        if rs is None:
+            raise RuntimeError(f"Missing setting '{key}' in CHIRP driver")
+        mut(rs)
+
+    radio.set_settings(settings)
