@@ -106,12 +106,16 @@ def exercise_driver(module, chirp_root: Path):
     except errors.RadioError:
         pass
 
+    baseline = raw[:]
+
     settings = radio.get_settings()
     mutations = {
         "ch1call": lambda rs: rs.value.set_value(5),
         "noaaautoscan": lambda rs: rs.value.set_value(True),
         "scan1en": lambda rs: rs.value.set_value("On"),
         "locktx": lambda rs: rs.value.set_value(True),
+        "voxlevel": lambda rs: rs.value.set_value("5"),
+        "key1short": lambda rs: rs.value.set_value("Alarm"),
     }
 
     for key, mut in mutations.items():
@@ -121,3 +125,22 @@ def exercise_driver(module, chirp_root: Path):
         mut(rs)
 
     radio.set_settings(settings)
+
+    for offset, name in [
+        (0x0E70, "public_settings"),
+        (0x0E78, "display_settings"),
+        (0x0E90, "keypad_settings"),
+        (0x0EA0, "voice_prompt"),
+        (0x0F18, "scanlist"),
+        (0x0F40, "lock_settings"),
+    ]:
+        if baseline[offset:offset + 8] == raw[offset:offset + 8]:
+            raise RuntimeError(f"CHIRP settings change did not touch {name} block (0x{offset:04X})")
+
+    modified = raw[:]
+    temp_mem = radio.get_memory(2)
+    temp_mem.empty = True
+    radio.set_memory(temp_mem)
+
+    if baseline == raw:
+        raise RuntimeError("CHIRP memory operations did not modify the image; layout may have changed")
