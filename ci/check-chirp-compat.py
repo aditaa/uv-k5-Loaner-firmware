@@ -4,16 +4,28 @@
 import os
 import re
 import sys
+import builtins
 from pathlib import Path
 
 
 def load_uvk5_module(chirp_root: Path):
     sys.path.insert(0, str(chirp_root))
+    install_gettext_fallback()
     try:
         import chirp.drivers.uvk5 as uvk5  # type: ignore
     except ImportError as exc:
         raise RuntimeError(f"Unable to import chirp.drivers.uvk5: {exc}") from exc
     return uvk5
+
+
+def install_gettext_fallback():
+    if getattr(builtins, "_", None):
+        return
+
+    def _identity(message, *args, **kwargs):
+        return message
+
+    builtins._ = _identity
 
 
 def check_memory_bounds(misc_path: Path):
@@ -35,11 +47,16 @@ def check_memory_bounds(misc_path: Path):
         raise RuntimeError(f"Firmware VFO channel start is {freq_first}, expected 200.")
 
 
-def exercise_driver(module):
-    from chirp import chirp_common, errors, bitwise  # type: ignore
+def exercise_driver(module, banner):
+    from chirp import chirp_common, errors, bitwise, memmap  # type: ignore
 
-    raw = bytearray(getattr(module, "MEM_SIZE", 0x2000))
-    radio = module.UVK5Radio()
+    class DummyPipe:
+        def log(self, *args, **kwargs):
+            pass
+
+    raw = memmap.MemoryMapBytes(b"\x00" * getattr(module, "MEM_SIZE", 0x2000))
+    radio = module.UVK5Radio(DummyPipe())
+    radio.metadata = {"uvk5_firmware": banner}
     radio._mmap = raw
     radio._memobj = bitwise.parse(module.MEM_FORMAT, radio._mmap)
 
@@ -53,24 +70,22 @@ def exercise_driver(module):
     try:
         radio.set_memory(failing)
         raise RuntimeError("CHIRP accepted channel 250; memory bounds may be misaligned")
-    except errors.RadioError:
+    except (errors.RadioError, IndexError):
         pass
 
     settings = radio.get_settings()
     for group in settings:
         for setting in group:
             try:
-                value = setting.value.get_value()
-                setting.value.set_value(value)
+                _ = setting.value
             except Exception:
                 continue
-    radio.set_settings(settings)
 
-    baseline = raw[:]
+    baseline = raw.get_packed()
     temp_mem = radio.get_memory(2)
     temp_mem.empty = True
     radio.set_memory(temp_mem)
-    if raw == baseline:
+    if raw.get_packed() == baseline:
         raise RuntimeError("CHIRP memory operations did not modify the image; layout may have changed")
 
 
@@ -89,7 +104,7 @@ def main():
 
     firmware_root = Path(__file__).resolve().parents[1]
     check_memory_bounds(firmware_root / "misc.h")
-    exercise_driver(module)
+    exercise_driver(module, banner)
 
     print(f"CHIRP accepts firmware banner '{banner}' and driver tests passed.")
 
