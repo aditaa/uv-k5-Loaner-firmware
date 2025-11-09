@@ -25,7 +25,7 @@
 #include "ui/helper.h"
 #include "ui/main.h"
 
-static void UI_CopyUpperTrimmed(const char *src, char *dst, size_t length)
+static void UI_CopyUpperTrimmed(const char* src, char* dst, size_t length)
 {
 	size_t i;
 	size_t j = 0;
@@ -45,7 +45,7 @@ static void UI_CopyUpperTrimmed(const char *src, char *dst, size_t length)
 	dst[j] = 0;
 }
 
-static void UI_GetVfoLabel(uint8_t vfo, char *buffer, size_t length)
+static void UI_GetVfoLabel(uint8_t vfo, char* buffer, size_t length)
 {
 	char name[17];
 
@@ -111,9 +111,9 @@ void UI_DisplayMain(void)
 	for (i = 0; i < 2; i++) {
 		UI_GetVfoLabel(i, label, sizeof(label));
 		snprintf(line, sizeof(line), "%c%c %s",
-		         UI_GetVfoMarker(i),
-		         (i == 0) ? 'A' : 'B',
-		         label);
+			 UI_GetVfoMarker(i),
+			 (i == 0) ? 'A' : 'B',
+			 label);
 		UI_PrintString(line, 0, 127, 2 + (i * 3), 8, true);
 	}
 

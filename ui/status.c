@@ -22,11 +22,11 @@
 #include "helper/battery.h"
 #include "external/printf/printf.h"
 
-static const uint8_t PercentGlyph[7] = { 0x41, 0xA2, 0x44, 0x08, 0x13, 0x26, 0x44 };
+static const uint8_t PercentGlyph[7] = {0x41, 0xA2, 0x44, 0x08, 0x13, 0x26, 0x44};
 
 static uint8_t UI_BatteryPercent(void)
 {
-	static const uint8_t Lookup[] = { 0, 20, 40, 60, 80, 95, 100 };
+	static const uint8_t Lookup[] = {0, 20, 40, 60, 80, 95, 100};
 	uint8_t level = gBatteryDisplayLevel;
 
 	if (level >= (sizeof(Lookup) / sizeof(Lookup[0]))) {
@@ -35,7 +35,7 @@ static uint8_t UI_BatteryPercent(void)
 	return Lookup[level];
 }
 
-static uint8_t UI_StatusWriteDigits(uint8_t cursor, const char *text)
+static uint8_t UI_StatusWriteDigits(uint8_t cursor, const char* text)
 {
 	while (*text != '\0' && cursor + 7 < sizeof(gStatusLine)) {
 		const char c = *text++;
