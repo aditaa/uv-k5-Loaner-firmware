@@ -75,7 +75,7 @@ jobs:
     env:
       CHIRP_REPO: https://github.com/aditaa/chirp.git
       CHIRP_REF: loaner-firmware-whitelist
-      COMPAT_SUFFIX: LNR24.12.1
+      COMPAT_SUFFIX: LNR2414
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
