@@ -23,6 +23,7 @@
 #include "radio.h"
 #include "settings.h"
 #include "ui/helper.h"
+#include "ui/inputbox.h"
 #include "ui/main.h"
 
 static void UI_CopyUpperTrimmed(const char* src, char* dst, size_t length)
@@ -59,7 +60,11 @@ static void UI_GetVfoLabel(uint8_t vfo, char* buffer, size_t length)
 	if (IS_MR_CHANNEL(channel)) {
 		char channel_string[8];
 
-		UI_GenerateChannelStringEx(channel_string, true, channel);
+		if (gInputBoxIndex != 0 && gEeprom.TX_VFO == vfo) {
+			UI_GenerateChannelStringEx(channel_string, true, channel);
+		} else {
+			snprintf(channel_string, sizeof(channel_string), "CH-%03u", channel + 1);
+		}
 		snprintf(buffer, length, "%s", channel_string);
 		return;
 	}
