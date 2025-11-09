@@ -14,74 +14,77 @@
  *     limitations under the License.
  */
 
+#include <stdint.h>
 #include <string.h>
-#if defined(ENABLE_FMRADIO)
-#include "app/fm.h"
-#endif
 #include "bitmaps.h"
-#include "driver/keyboard.h"
 #include "driver/st7565.h"
-#include "functions.h"
+#include "font.h"
 #include "helper/battery.h"
-#include "misc.h"
-#include "settings.h"
-#include "ui/status.h"
+#include "external/printf/printf.h"
+
+static const uint8_t PercentGlyph[7] = {0x41, 0xA2, 0x44, 0x08, 0x13, 0x26, 0x44};
+
+static uint8_t UI_BatteryPercent(void)
+{
+	static const uint8_t Lookup[] = {0, 20, 40, 60, 80, 95, 100};
+	uint8_t level = gBatteryDisplayLevel;
+
+	if (level >= (sizeof(Lookup) / sizeof(Lookup[0]))) {
+		level = (sizeof(Lookup) / sizeof(Lookup[0])) - 1;
+	}
+	return Lookup[level];
+}
+
+static uint8_t UI_StatusWriteDigits(uint8_t cursor, const char* text)
+{
+	while (*text != '\0' && cursor + 7 < sizeof(gStatusLine)) {
+		const char c = *text++;
+		if (c >= '0' && c <= '9') {
+			memcpy(gStatusLine + cursor, gFontSmallDigits[c - '0'], 7);
+			cursor += 7;
+		} else if (c == ' ') {
+			cursor += 3;
+		}
+	}
+	return cursor;
+}
 
 void UI_DisplayStatus(void)
 {
 	memset(gStatusLine, 0, sizeof(gStatusLine));
-	if (gCurrentFunction == FUNCTION_POWER_SAVE) {
-		memcpy(gStatusLine, BITMAP_PowerSave, sizeof(BITMAP_PowerSave));
-	}
+
 	if (gBatteryDisplayLevel < 2) {
 		if (gLowBatteryBlink == 1) {
 			memcpy(gStatusLine + 110, BITMAP_BatteryLevel1, sizeof(BITMAP_BatteryLevel1));
 		}
 	} else {
-		if (gBatteryDisplayLevel == 2) {
+		switch (gBatteryDisplayLevel) {
+		case 2:
 			memcpy(gStatusLine + 110, BITMAP_BatteryLevel2, sizeof(BITMAP_BatteryLevel2));
-		} else if (gBatteryDisplayLevel == 3) {
+			break;
+		case 3:
 			memcpy(gStatusLine + 110, BITMAP_BatteryLevel3, sizeof(BITMAP_BatteryLevel3));
-		} else if (gBatteryDisplayLevel == 4) {
+			break;
+		case 4:
 			memcpy(gStatusLine + 110, BITMAP_BatteryLevel4, sizeof(BITMAP_BatteryLevel4));
-		} else {
+			break;
+		default:
 			memcpy(gStatusLine + 110, BITMAP_BatteryLevel5, sizeof(BITMAP_BatteryLevel5));
+			break;
 		}
 	}
+
 	if (gChargingWithTypeC) {
 		memcpy(gStatusLine + 100, BITMAP_USB_C, sizeof(BITMAP_USB_C));
 	}
-	if (gEeprom.KEY_LOCK) {
-		memcpy(gStatusLine + 90, BITMAP_KeyLock, sizeof(BITMAP_KeyLock));
-	} else if (gWasFKeyPressed) {
-		memcpy(gStatusLine + 90, BITMAP_F_Key, sizeof(BITMAP_F_Key));
+
+	char text[4];
+	snprintf(text, sizeof(text), "%u", UI_BatteryPercent());
+	uint8_t cursor = 70;
+	cursor = UI_StatusWriteDigits(cursor, text);
+	if (cursor + 7 < sizeof(gStatusLine)) {
+		memcpy(gStatusLine + cursor, PercentGlyph, sizeof(PercentGlyph));
 	}
 
-	if (gEeprom.VOX_SWITCH) {
-		memcpy(gStatusLine + 71, BITMAP_VOX, sizeof(BITMAP_VOX));
-	}
-	if (gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF) {
-		memcpy(gStatusLine + 58, BITMAP_WX, sizeof(BITMAP_WX));
-	}
-	if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
-		memcpy(gStatusLine + 45, BITMAP_TDR, sizeof(BITMAP_TDR));
-	}
-	if (gEeprom.VOICE_PROMPT != VOICE_PROMPT_OFF) {
-		memcpy(gStatusLine + 34, BITMAP_VoicePrompt, sizeof(BITMAP_VoicePrompt));
-	}
-	if (gSetting_KILLED) {
-		memset(gStatusLine + 21, 0xFF, 10);
-	}
-#if defined(ENABLE_FMRADIO)
-	else if (gFmRadioMode) {
-		memcpy(gStatusLine + 21, BITMAP_FM, sizeof(BITMAP_FM));
-	}
-#endif
-#if defined(ENABLE_NOAA)
-	if (gIsNoaaMode) {
-		memcpy(gStatusLine + 7, BITMAP_NOAA, sizeof(BITMAP_NOAA));
-	}
-#endif
 	ST7565_BlitStatusLine();
 }
-
