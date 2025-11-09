@@ -63,7 +63,10 @@ static void UI_GetVfoLabel(uint8_t vfo, char* buffer, size_t length)
 		if (gInputBoxIndex != 0 && gEeprom.TX_VFO == vfo) {
 			UI_GenerateChannelStringEx(channel_string, true, channel);
 		} else {
-			snprintf(channel_string, sizeof(channel_string), "CH-%03u", channel + 1);
+			snprintf(channel_string,
+				 sizeof(channel_string),
+				 "CH-%03u",
+				 (unsigned int)(channel + 1));
 		}
 		snprintf(buffer, length, "%s", channel_string);
 		return;
