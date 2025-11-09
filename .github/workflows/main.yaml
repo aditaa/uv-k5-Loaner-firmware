@@ -139,7 +139,7 @@ jobs:
             fi
             echo "VERSION_SUFFIX=${{ github.event.inputs.version_suffix }}" >> "$GITHUB_ENV"
           else
-            echo "VERSION_SUFFIX=CI${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+            echo "VERSION_SUFFIX=CI${GITHUB_SHA::5}" >> "$GITHUB_ENV"
           fi
 
       - name: Build firmware (Docker)

@@ -126,7 +126,24 @@ else
     ifeq ($(strip $(VERSION_SUFFIX)),)
       $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or create an LNR* tag.)
     endif
-  endif
+endif
+endif
+
+VERSION_SUFFIX_RAW := $(VERSION_SUFFIX)
+VERSION_SUFFIX := $(shell printf '%s' $(VERSION_SUFFIX_RAW) | tr '[:lower:]' '[:upper:]' | tr -cd 'A-Z0-9')
+
+ifeq ($(strip $(VERSION_SUFFIX)),)
+  $(error Sanitized VERSION_SUFFIX is empty; use only [A-Z0-9] characters)
+endif
+
+VERSION_SUFFIX_LEN := $(strip $(shell printf '%s' $(VERSION_SUFFIX) | wc -c))
+
+ifneq ($(VERSION_SUFFIX_LEN),7)
+  $(error Sanitized VERSION_SUFFIX "$(VERSION_SUFFIX)" must be exactly 7 characters (got $(VERSION_SUFFIX_LEN)))
+endif
+
+ifneq ($(VERSION_SUFFIX),$(VERSION_SUFFIX_RAW))
+  $(warning VERSION_SUFFIX sanitized from "$(VERSION_SUFFIX_RAW)" to "$(VERSION_SUFFIX)")
 endif
 
 VERSION_SUFFIX_ESCAPED := $(subst ",\",$(VERSION_SUFFIX))
