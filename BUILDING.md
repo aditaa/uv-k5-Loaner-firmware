@@ -11,7 +11,7 @@ This document walks through producing firmware binaries locally or inside the pr
 
 1. From the repository root (replace the suffix with your release identifier; see “Versioning” for the naming scheme—suffixes must be exactly 7 alphanumeric characters):
    ```sh
-   VERSION_SUFFIX=LNR2414 ./compile-with-docker.sh
+   VERSION_SUFFIX=LNR2415 ./compile-with-docker.sh
    ```
 2. The script builds the Docker image, runs `ci/run.sh` inside the container (cppcheck + pytest + firmware build), and drops artifacts to `compiled-firmware/` on your host:
    - `compiled-firmware/loaner-firmware.bin`
@@ -28,19 +28,19 @@ Docker remains the preferred path. Only follow these steps if you must build loc
    ```
 2. Build the firmware (the `TARGET` name controls the output filename):
    ```sh
-   make TARGET=loaner-firmware VERSION_SUFFIX=LNR2414
+   make TARGET=loaner-firmware VERSION_SUFFIX=LNR2415
    ```
    The above command produces `loaner-firmware.bin`. If Python with `crcmod` is installed you will also get `loaner-firmware.packed.bin`.  
    If you omit `TARGET=...` the files are named `firmware.bin` / `firmware.packed.bin`.
-   The build also exports `VERSION_SUFFIX` into the binaries. Set it explicitly (for example `make TARGET=loaner-firmware VERSION_SUFFIX=LNR2414`) or create an `LNR*` git tag that the Makefile can discover. The Makefile uppercases the suffix, strips punctuation, and errors out unless the sanitized value is exactly 7 characters so the radio’s bootloader will accept the banner.
+   The build also exports `VERSION_SUFFIX` into the binaries. Set it explicitly (for example `make TARGET=loaner-firmware VERSION_SUFFIX=LNR2415`) or create an `LNR*` git tag that the Makefile can discover. The Makefile uppercases the suffix, strips punctuation, and errors out unless the sanitized value is exactly 7 characters so the radio’s bootloader will accept the banner.
 
 ## Creating a Packed Binary Manually
 If the packed image was not produced automatically (for example on a minimal native setup), run:
 ```sh
-python3 fw-pack.py loaner-firmware.bin LNR2414 loaner-firmware.packed.bin
+python3 fw-pack.py loaner-firmware.bin LNR2415 loaner-firmware.packed.bin
 ```
 
-- Replace `LNR2414` with the same 7-character suffix you pass in via `VERSION_SUFFIX`. That value is embedded in both the welcome screen and the packed metadata.  
+- Replace `LNR2415` with the same 7-character suffix you pass in via `VERSION_SUFFIX`. That value is embedded in both the welcome screen and the packed metadata.  
   Any punctuation is stripped automatically; if the sanitized value is not exactly 7 characters the build script aborts.
 - The packed image is required for PC loader flashing because it carries the metadata Quansheng's tool expects.
 
@@ -50,7 +50,7 @@ python3 fw-pack.py loaner-firmware.bin LNR2414 loaner-firmware.packed.bin
 - A CHIRP compatibility check clones the driver repo (defaulting to our whitelist branch), asserts that the latest `OEFW-LNR…` banner still passes `k5_approve_firmware`, revalidates that the firmware keeps the OEM channel bounds (MR channels 0–199, etc.), and runs a subset of the UV-K5 driver tests (memory edits/settings mutations). Update `COMPAT_SUFFIX` or the tracked CHIRP ref when cutting new releases so uploads keep working.
 - If you are working natively, `ci/run.sh` reproduces the same flow once the dependencies are installed (see the Dockerfile for the package list). Run it with the same suffix to mirror CI:
   ```sh
-  VERSION_SUFFIX=LNR2414 ./ci/run.sh
+  VERSION_SUFFIX=LNR2415 ./ci/run.sh
   ```
 - GitHub Actions runs `pytest` under Python 3.10 and 3.12 before the Docker build; keep tests compatible with both versions.
 - To run individual pieces, consult the script for the exact command switches, then invoke:
@@ -68,44 +68,44 @@ Feature flags live near the top of `Makefile` as `ENABLE_*` macros. The loaner b
 ## Firmware Metadata and Releases
 - A successful build leaves you with `firmware.bin` (raw) and, when Python and `crcmod` are available, `firmware.packed.bin`. The packed image is what Quansheng's loader validates.
 - Use `fw-pack.py` to stamp a release tag into the packed image. `make` already invokes the script with `VERSION_SUFFIX`, so the packed file inherits the same banner. To repack manually, pass the suffix yourself (example above).
-- When building outside of Docker, set `VERSION_SUFFIX` in your environment once (for example `export VERSION_SUFFIX=LNR2414`) so every command picks up the same value.  
+- When building outside of Docker, set `VERSION_SUFFIX` in your environment once (for example `export VERSION_SUFFIX=LNR2415`) so every command picks up the same value.  
   For Docker builds, prefix the wrapper with the same variable:  
   ```sh
-  VERSION_SUFFIX=LNR2414 ./compile-with-docker.sh
+  VERSION_SUFFIX=LNR2415 ./compile-with-docker.sh
   ```
 - Change the `TARGET` on the `make` command line to tweak the output filenames without editing source, for example `make TARGET=loaner-firmware`.
 - Before publishing a release, spot-check the welcome screen on hardware to make sure the tag matches what you intend to share with end users.
-- Recommended version format: mirror other UV-K5 firmware projects (Quansheng's stock firmware ships as `v2.1.27`, Open Edition uses `OEFW-2023.09`). Tag milestones as `vYY.MM[.PATCH]` but feed the firmware a 7-character, punctuation-free `VERSION_SUFFIX` (for example suffix `LNR2414` for release `v24.12.3`). The packed metadata must remain `*OEFW-LNR2414` so the bootloader accepts the image, while the UART handshake tells CHIRP the stock-style `1.02.LNR2414` string for compatibility.
+- Recommended version format: mirror other UV-K5 firmware projects (Quansheng's stock firmware ships as `v2.1.27`, Open Edition uses `OEFW-2023.09`). Tag milestones as `vYY.MM[.PATCH]` but feed the firmware a 7-character, punctuation-free `VERSION_SUFFIX` (for example suffix `LNR2415` for release `v24.12.4`). The packed metadata must remain `*OEFW-LNR2415` so the bootloader accepts the image, while the UART handshake tells CHIRP the stock-style `1.02.LNR2415` string for compatibility.
 
 ## Release Versioning Checklist
 Follow this sequence for every tagged release:
 
 0. **Create a release branch**: Start from `main` and branch before making release edits (for example `git checkout -b release/LNR24.12`). All commits should land via a merge request.
-1. **Pick a suffix**: Choose an exactly 7-character identifier in the form `LNRYYNN` or `LNRYYNP` (for example `LNR2414`). The suffix should line up with the git tag you plan to publish (for example `v24.12.3`) without introducing punctuation that the bootloader rejects.
+1. **Pick a suffix**: Choose an exactly 7-character identifier in the form `LNRYYNN` or `LNRYYNP` (for example `LNR2415`). The suffix should line up with the git tag you plan to publish (for example `v24.12.4`) without introducing punctuation that the bootloader rejects.
 2. **Export the suffix** so every build step sees the same value:
    ```sh
-   export VERSION_SUFFIX=LNR2414
+   export VERSION_SUFFIX=LNR2415
    ```
    (Or prefix individual commands with `VERSION_SUFFIX=...` if you prefer.)
 3. **Build and test** (Docker path preferred):
    ```sh
-   VERSION_SUFFIX=LNR2414 ./compile-with-docker.sh
+   VERSION_SUFFIX=LNR2415 ./compile-with-docker.sh
    ```
-   This reproduces the CI pipeline (cppcheck + pytest + firmware build) and drops sanitized artifacts such as `compiled-firmware/loaner-firmware-LNR2414.bin/.packed.bin`.  
+   This reproduces the CI pipeline (cppcheck + pytest + firmware build) and drops sanitized artifacts such as `compiled-firmware/loaner-firmware-LNR2415.bin/.packed.bin`.  
    If you must build natively, run:
    ```sh
    make clean
-   make TARGET=loaner-firmware VERSION_SUFFIX=LNR2414
+   make TARGET=loaner-firmware VERSION_SUFFIX=LNR2415
    pytest -q
    ```
    Either path should pass without warnings; capture the output for the merge request description. Confirm the printed firmware size stays below the configured limit (`MAX_FIRMWARE_SIZE`, default 122 880 bytes) so there is margin for future changes.
-4. **Validate on hardware**: Flash the packed image and confirm the radio splash reports the sanitized banner (for example `OEFW-LNR2414`).
+4. **Validate on hardware**: Flash the packed image and confirm the radio splash reports the sanitized banner (for example `OEFW-LNR2415`).
 5. **Tag the release** using the calendar semantic scheme:
    ```sh
-  git tag -a v24.12.3 -m "Loaner firmware v24.12.3"
-  git push origin v24.12.3
+  git tag -a v24.12.4 -m "Loaner firmware v24.12.4"
+  git push origin v24.12.4
    ```
-6. **Publish the GitHub release**: Attach the packed binary (`compiled-firmware/loaner-firmware-LNR2414.packed.bin`) and include the validation steps in the notes. If you prefer CI-generated artifacts, trigger the `CI` workflow manually via “Run workflow” in GitHub and supply `LNR2414` as the `version_suffix`; the workflow only uploads artifacts on manual runs.
+6. **Publish the GitHub release**: Attach the packed binary (`compiled-firmware/loaner-firmware-LNR2415.packed.bin`) and include the validation steps in the notes. If you prefer CI-generated artifacts, trigger the `CI` workflow manually via “Run workflow” in GitHub and supply `LNR2415` as the `version_suffix`; the workflow only uploads artifacts on manual runs.
 7. **Upstream tooling**: If you ever change the metadata prefix (`*OEFW-`), the UART handshake string (`1.02.`), or the on-radio banner (`OEFW-`), update dependent projects (for example Egzumer’s CHIRP driver) so they continue to recognise the build. As long as the suffix stays alphanumeric, CHIRP treats the `1.02.<SUFFIX>` handshake like the stock firmware string.
 
 ## Branching and Release Flow

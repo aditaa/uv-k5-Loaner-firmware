@@ -39,13 +39,13 @@ This build assumes the channel plan lives on your ICS-205. To move that plan int
 
 ### Detailed CHIRP workflow (UV-K5 + Egzumer/OSFW build)
 
-The loaner firmware reports the stock handshake string (`1.02.LNRxxxx`), so you can stay on the upstream CHIRP tree. Use the existing **Quansheng → UV-K5 (Plus / unsupported / OSFW)** driver entry that Egzumer added for the Plus/OSFW firmware:
+The loaner firmware reports the stock handshake string (`1.02.LNR2415`), so you can stay on the upstream CHIRP tree. Use the existing **Quansheng → UV-K5 (Plus / unsupported / OSFW)** driver entry that Egzumer added for the Plus/OSFW firmware:
 
 1. Update to the latest CHIRP daily build (or the Egzumer fork) so that “UV-K5 (Plus / unsupported / OSFW)” shows up under `Radio → Download From Radio`.
 2. Plug in the CH340 cable, switch the radio **on** (normal operation), and note the serial port name (`/dev/ttyUSB0`, `COM3`, etc.).
 3. In CHIRP choose `Radio → Download From Radio`, set **Vendor** to `Quansheng` and **Model** to `UV-K5 (Plus / unsupported / OSFW)`, then pick the serial port. Leave the radio unlocked; the loaner build keeps the keypad constrained but still answers the driver handshake.
 4. Once the download succeeds, edit memories as usual. Because the firmware only exposes 200 MR channels, keep your plan within that range.
-5. Upload with `Radio → Upload To Radio` using the same model selection. CHIRP will send the `1.02.LNRxxxx` identifier, which the radio accepts; the on-radio splash still says `OEFW-LNRxxxx` so field users see the loaner tag.
+5. Upload with `Radio → Upload To Radio` using the same model selection. CHIRP will send the `1.02.LNR2415` identifier, which the radio accepts; the on-radio splash still says `OEFW-LNR2415` so field users see the loaner tag.
 
 If CHIRP warns that it cannot recognise the firmware, double-check that you selected the “Plus / unsupported / OSFW” entry—selecting the vanilla UV-K5 or K5 Plus targets will fail the version check.
 
