@@ -75,13 +75,13 @@ Feature flags live near the top of `Makefile` as `ENABLE_*` macros. The loaner b
   ```
 - Change the `TARGET` on the `make` command line to tweak the output filenames without editing source, for example `make TARGET=loaner-firmware`.
 - Before publishing a release, spot-check the welcome screen on hardware to make sure the tag matches what you intend to share with end users.
-- Recommended version format: mirror other UV-K5 firmware projects (Quansheng's stock firmware ships as `v2.1.27`, Open Edition uses `OEFW-2023.09`). Tag milestones as `vYY.MM[.PATCH]` but feed the firmware a 7-character, punctuation-free `VERSION_SUFFIX` (for example suffix `LNR2414` for release `v24.12.2`). The packed metadata must remain `*OEFW-LNR2414` so the bootloader accepts the image, while the UART handshake tells CHIRP the stock-style `1.02.LNR2414` string for compatibility.
+- Recommended version format: mirror other UV-K5 firmware projects (Quansheng's stock firmware ships as `v2.1.27`, Open Edition uses `OEFW-2023.09`). Tag milestones as `vYY.MM[.PATCH]` but feed the firmware a 7-character, punctuation-free `VERSION_SUFFIX` (for example suffix `LNR2414` for release `v24.12.3`). The packed metadata must remain `*OEFW-LNR2414` so the bootloader accepts the image, while the UART handshake tells CHIRP the stock-style `1.02.LNR2414` string for compatibility.
 
 ## Release Versioning Checklist
 Follow this sequence for every tagged release:
 
 0. **Create a release branch**: Start from `main` and branch before making release edits (for example `git checkout -b release/LNR24.12`). All commits should land via a merge request.
-1. **Pick a suffix**: Choose an exactly 7-character identifier in the form `LNRYYNN` or `LNRYYNP` (for example `LNR2414`). The suffix should line up with the git tag you plan to publish (for example `v24.12.2`) without introducing punctuation that the bootloader rejects.
+1. **Pick a suffix**: Choose an exactly 7-character identifier in the form `LNRYYNN` or `LNRYYNP` (for example `LNR2414`). The suffix should line up with the git tag you plan to publish (for example `v24.12.3`) without introducing punctuation that the bootloader rejects.
 2. **Export the suffix** so every build step sees the same value:
    ```sh
    export VERSION_SUFFIX=LNR2414
@@ -102,8 +102,8 @@ Follow this sequence for every tagged release:
 4. **Validate on hardware**: Flash the packed image and confirm the radio splash reports the sanitized banner (for example `OEFW-LNR2414`).
 5. **Tag the release** using the calendar semantic scheme:
    ```sh
-  git tag -a v24.12.2 -m "Loaner firmware v24.12.2"
-  git push origin v24.12.2
+  git tag -a v24.12.3 -m "Loaner firmware v24.12.3"
+  git push origin v24.12.3
    ```
 6. **Publish the GitHub release**: Attach the packed binary (`compiled-firmware/loaner-firmware-LNR2414.packed.bin`) and include the validation steps in the notes. If you prefer CI-generated artifacts, trigger the `CI` workflow manually via “Run workflow” in GitHub and supply `LNR2414` as the `version_suffix`; the workflow only uploads artifacts on manual runs.
 7. **Upstream tooling**: If you ever change the metadata prefix (`*OEFW-`), the UART handshake string (`1.02.`), or the on-radio banner (`OEFW-`), update dependent projects (for example Egzumer’s CHIRP driver) so they continue to recognise the build. As long as the suffix stays alphanumeric, CHIRP treats the `1.02.<SUFFIX>` handshake like the stock firmware string.
