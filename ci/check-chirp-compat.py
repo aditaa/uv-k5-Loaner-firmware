@@ -97,7 +97,7 @@ def main():
     chirp_root = Path(sys.argv[1]).resolve()
     module = load_uvk5_module(chirp_root)
 
-    suffix = os.environ.get("COMPAT_SUFFIX", "LNR2414")
+    suffix = os.environ.get("COMPAT_SUFFIX", "LNR2415")
     firmware_id = f"1.02.{suffix}"
     if not module.UVK5Radio.k5_approve_firmware(firmware_id):
         raise RuntimeError(f"CHIRP rejected firmware identifier {firmware_id}")

@@ -48,7 +48,7 @@ if [[ "${MODE}" == "cppcheck" ]]; then
 	exit 0
 fi
 
-: "${VERSION_SUFFIX:?VERSION_SUFFIX is required (set a 7-character value such as VERSION_SUFFIX=LNR2414 before running this script)}"
+: "${VERSION_SUFFIX:?VERSION_SUFFIX is required (set a 7-character value such as VERSION_SUFFIX=LNR2415 before running this script)}"
 
 mkdir -p "${ARTIFACT_DIR}"
 rm -f "${ARTIFACT_DIR}"/loaner-firmware*.bin

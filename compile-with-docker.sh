@@ -6,7 +6,7 @@ OUT_DIR="${SCRIPT_DIR}/compiled-firmware"
 IMAGE_TAG="uvk5-loaner"
 
 if [[ -z "${VERSION_SUFFIX:-}" ]]; then
-  echo "VERSION_SUFFIX must be set (use a 7-character alphanumeric value, e.g. VERSION_SUFFIX=LNR2414 ./compile-with-docker.sh)" >&2
+  echo "VERSION_SUFFIX must be set (use a 7-character alphanumeric value, e.g. VERSION_SUFFIX=LNR2415 ./compile-with-docker.sh)" >&2
   exit 1
 fi
 
