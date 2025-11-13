@@ -98,15 +98,15 @@ def main():
     module = load_uvk5_module(chirp_root)
 
     suffix = os.environ.get("COMPAT_SUFFIX", "LNR2414")
-    banner = f"OEFW-{suffix}"
-    if not module.UVK5Radio.k5_approve_firmware(banner):
-        raise RuntimeError(f"CHIRP rejected firmware banner {banner}")
+    firmware_id = f"1.02.{suffix}"
+    if not module.UVK5Radio.k5_approve_firmware(firmware_id):
+        raise RuntimeError(f"CHIRP rejected firmware identifier {firmware_id}")
 
     firmware_root = Path(__file__).resolve().parents[1]
     check_memory_bounds(firmware_root / "misc.h")
-    exercise_driver(module, banner)
+    exercise_driver(module, firmware_id)
 
-    print(f"CHIRP accepts firmware banner '{banner}' and driver tests passed.")
+    print(f"CHIRP accepts firmware identifier '{firmware_id}' and driver tests passed.")
 
 
 if __name__ == "__main__":

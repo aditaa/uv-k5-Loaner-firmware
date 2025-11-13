@@ -17,7 +17,7 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-extern const char Version[];
+extern const char VersionBanner[];
+extern const char FirmwareId[];
 
 #endif
-
