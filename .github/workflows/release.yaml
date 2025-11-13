@@ -20,8 +20,15 @@ jobs:
 
       - name: Derive version suffix
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          SUFFIX="LNR${TAG}"
+          if [[ ! -f VERSION_SUFFIX ]]; then
+            echo "VERSION_SUFFIX file is missing" >&2
+            exit 1
+          fi
+          SUFFIX="$(tr -d '\r\n' < VERSION_SUFFIX)"
+          if [[ -z "${SUFFIX}" ]]; then
+            echo "VERSION_SUFFIX file is empty" >&2
+            exit 1
+          fi
           echo "Using VERSION_SUFFIX=${SUFFIX}"
           echo "VERSION_SUFFIX=${SUFFIX}" >> "$GITHUB_ENV"
 

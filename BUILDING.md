@@ -81,7 +81,7 @@ Feature flags live near the top of `Makefile` as `ENABLE_*` macros. The loaner b
 Follow this sequence for every tagged release:
 
 0. **Create a release branch**: Start from `main` and branch before making release edits (for example `git checkout -b release/LNR24.12`). All commits should land via a merge request.
-1. **Pick a suffix**: Choose an exactly 7-character identifier in the form `LNRYYNN` or `LNRYYNP` (for example `LNR2415`). The suffix should line up with the git tag you plan to publish (for example `v24.12.4`) without introducing punctuation that the bootloader rejects.
+1. **Pick a suffix**: Choose an exactly 7-character identifier in the form `LNRYYNN` or `LNRYYNP` (for example `LNR2415`) and update the root `VERSION_SUFFIX` file so automation can read it. The suffix should line up with the git tag you plan to publish (for example `v24.12.4`) without introducing punctuation that the bootloader rejects.
 2. **Export the suffix** so every build step sees the same value:
    ```sh
    export VERSION_SUFFIX=LNR2415
