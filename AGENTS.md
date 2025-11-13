@@ -36,7 +36,7 @@
 
 ## Versioning Strategy
 - Follow the calendar-semver pattern used by other UV-K5 forks (e.g. Quansheng's `v2.1.27` and Open Edition's `OEFW-2023.09`). Adopt `vYY.MM[.PATCH]` for git tags and releases (for example `v24.03` or `v24.03.1` for hotfixes).
-- The packed firmware metadata keeps the `*OEFW-` prefix for CHIRP compatibility; limit the suffix you pass to `fw-pack.py` to an exact 7-character alphanumeric code such as `LNR2414` so the welcome banner reads `OEFW-LNR2414`.
+- The packed firmware metadata must keep the `*OEFW-` prefix (Quansheng’s bootloader refuses anything else). For CHIRP compatibility we report the stock-style `1.02.<SUFFIX>` string over the UART handshake instead, while the welcome banner continues to show `OEFW-LNR2414`.
 - Update the tag, the packed image suffix, and the GitHub release name together so end users and CHIRP all report the same version string.
 
 ## Firmware Configuration Tips

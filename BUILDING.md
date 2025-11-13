@@ -75,7 +75,7 @@ Feature flags live near the top of `Makefile` as `ENABLE_*` macros. The loaner b
   ```
 - Change the `TARGET` on the `make` command line to tweak the output filenames without editing source, for example `make TARGET=loaner-firmware`.
 - Before publishing a release, spot-check the welcome screen on hardware to make sure the tag matches what you intend to share with end users.
-- Recommended version format: mirror other UV-K5 firmware projects (Quansheng's stock firmware ships as `v2.1.27`, Open Edition uses `OEFW-2023.09`). Tag milestones as `vYY.MM[.PATCH]` but feed the firmware a 7-character, punctuation-free `VERSION_SUFFIX` (for example suffix `LNR2414` for release `v24.12.2`). CHIRP reads the full `*OEFW-LNR2414` banner and treats it as a known build once whitelisted.
+- Recommended version format: mirror other UV-K5 firmware projects (Quansheng's stock firmware ships as `v2.1.27`, Open Edition uses `OEFW-2023.09`). Tag milestones as `vYY.MM[.PATCH]` but feed the firmware a 7-character, punctuation-free `VERSION_SUFFIX` (for example suffix `LNR2414` for release `v24.12.2`). The packed metadata must remain `*OEFW-LNR2414` so the bootloader accepts the image, while the UART handshake tells CHIRP the stock-style `1.02.LNR2414` string for compatibility.
 
 ## Release Versioning Checklist
 Follow this sequence for every tagged release:
@@ -106,7 +106,7 @@ Follow this sequence for every tagged release:
   git push origin v24.12.2
    ```
 6. **Publish the GitHub release**: Attach the packed binary (`compiled-firmware/loaner-firmware-LNR2414.packed.bin`) and include the validation steps in the notes. If you prefer CI-generated artifacts, trigger the `CI` workflow manually via “Run workflow” in GitHub and supply `LNR2414` as the `version_suffix`; the workflow only uploads artifacts on manual runs.
-7. **Upstream tooling**: When the suffix changes, update any dependent projects (for example CHIRP PR #1414) so they whitelist the new `OEFW-LNR` banner. CHIRP only accepts alphanumeric suffixes, so keep ours alphanumeric to match.
+7. **Upstream tooling**: If you ever change the metadata prefix (`*OEFW-`), the UART handshake string (`1.02.`), or the on-radio banner (`OEFW-`), update dependent projects (for example Egzumer’s CHIRP driver) so they continue to recognise the build. As long as the suffix stays alphanumeric, CHIRP treats the `1.02.<SUFFIX>` handshake like the stock firmware string.
 
 ## Branching and Release Flow
 1. Start work on a fresh branch instead of `main`:
