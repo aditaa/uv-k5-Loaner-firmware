@@ -1,0 +1,10 @@
+# Direct and transitive Python dependencies used by repository CI.
+# Update as one reviewed set and validate on Python 3.10.18 and 3.12.11.
+clang-format==14.0.6
+colorama==0.4.6
+iniconfig==2.3.0
+packaging==26.2
+pluggy==1.6.0
+pygments==2.20.0
+pytest==8.4.2
+ruff==0.5.6

@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import platform
 import re
 import shutil
@@ -131,6 +132,11 @@ def bundle_artifacts(
 		"schema": MANIFEST_SCHEMA,
 		"release_tag": release_tag,
 		"source_commit": source_commit,
+		"build_environment": {
+			"container_base": os.environ.get("BUILD_CONTAINER_BASE", "unavailable"),
+			"package_snapshot": os.environ.get("BUILD_PACKAGE_SNAPSHOT", "unavailable"),
+			"source_date_epoch": os.environ.get("SOURCE_DATE_EPOCH", "unavailable"),
+		},
 		"version_suffix": suffix,
 		"firmware_ids": {
 			"display_banner": f"OEFW-{suffix}",

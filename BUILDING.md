@@ -6,7 +6,7 @@ This document covers local builds, validation, firmware packing, and releases.
 
 - Docker for the recommended build path.
 - For native builds: ARM GCC 10.3.1 on `PATH`, GNU Make, and Python 3.
-- For native validation: `cppcheck`, `pytest`, and the pinned formatter from `ci/requirements-format.txt`.
+- For native validation: `cppcheck`, `shellcheck`, and the pinned Python tools from `ci/requirements-ci.txt`.
 
 ## Docker Build (recommended)
 
@@ -16,14 +16,14 @@ Run the complete validation and build pipeline with an exact seven-character upp
 VERSION_SUFFIX=LNR2415 ./compile-with-docker.sh
 ```
 
-The wrapper runs the formatting check, cppcheck, pytest, and the ARM build. It writes a verified bundle to `compiled-firmware/`:
+The wrapper runs the formatting check, cppcheck, pytest, and two clean ARM builds. The two raw images and two packed images must be byte-identical before it writes a verified bundle to `compiled-firmware/`:
 
 - `loaner-firmware-LNR2415.bin`
 - `loaner-firmware-LNR2415.packed.bin`
 - `loaner-firmware-LNR2415.manifest.json`
 - `loaner-firmware-LNR2415.sha256`
 
-The manifest records file sizes and hashes, the source commit, firmware identifiers, and build-tool versions. The checksum file covers both images and the manifest.
+The manifest records file sizes and hashes, the source commit, firmware identifiers, and build-tool versions. The checksum file covers both images and the manifest. The Docker base, dated Arch package repository, Python packages, Arm archive checksum, and GitHub Actions are pinned; see `ci/dependencies.md` for the reviewed values and update procedure.
 
 ## Native Build (optional)
 
@@ -48,14 +48,14 @@ The verifier checks the XMODEM CRC, `*OEFW-` metadata prefix, exact embedded suf
 The Docker wrapper is the canonical full check. Native equivalents are:
 
 ```sh
-python -m pip install -r ci/requirements-format.txt pytest
+python -m pip install -r ci/requirements-ci.txt
 ci/check-clang-format.sh
 CI_MODE=cppcheck ci/run.sh
 pytest -q
 VERSION_SUFFIX=LNR2415 ci/run.sh
 ```
 
-GitHub Actions runs tests under Python 3.10 and 3.12, checks CHIRP compatibility, runs CodeQL, and performs the Docker firmware build. Keep the firmware below `MAX_FIRMWARE_SIZE` (122880 bytes by default).
+GitHub Actions runs tests under Python 3.10.18 and 3.12.11, checks CHIRP compatibility, runs CodeQL, and performs the Docker firmware build. Docker builds export the changed-line formatting diff on the host and mount it read-only, so Git history never enters the image context. Keep the firmware below `MAX_FIRMWARE_SIZE` (122880 bytes by default).
 
 ## Release Version Mapping
 
@@ -81,7 +81,7 @@ Before tagging, write the resulting value to the root `VERSION_SUFFIX` file and 
 
 1. Create a release branch from current `main`.
 2. Pick a `vYY.MM[.PATCH]` tag and derive its suffix.
-3. Update `VERSION_SUFFIX`, build with that suffix, and run all checks.
+3. Update `VERSION_SUFFIX`, build with that suffix, and run all checks, including the two-build hash comparison.
 4. Flash the packed image and confirm the displayed version on hardware.
 5. Merge the release preparation PR.
 6. Tag the exact merge commit and push the annotated tag:

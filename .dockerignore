@@ -1,0 +1,15 @@
+/.git
+**/.git
+/.docker-format.*
+/compiled-firmware
+/firmware
+/firmware.bin
+/firmware.packed.bin
+/loaner-firmware
+/loaner-firmware.bin
+/loaner-firmware.packed.bin
+*.d
+*.o
+**/__pycache__
+/.pytest_cache
+/.ruff_cache

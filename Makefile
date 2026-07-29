@@ -116,7 +116,8 @@ OBJCOPY = arm-none-eabi-objcopy
 SIZE = arm-none-eabi-size
 PYTHON ?= python3
 
-GIT_HASH := $(shell git rev-parse --short HEAD)
+SOURCE_COMMIT ?= $(shell git rev-parse HEAD 2>/dev/null)
+GIT_HASH := $(shell printf '%.7s' '$(SOURCE_COMMIT)')
 
 VERSION_SUFFIX ?= $(strip $(shell cat VERSION_SUFFIX 2>/dev/null))
 

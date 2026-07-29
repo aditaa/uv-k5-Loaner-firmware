@@ -1,31 +1,33 @@
-FROM archlinux:latest
+# linux/amd64 image published 2026-07-27. Update this digest and the
+# ARCH_REPOSITORY_DATE together; see ci/dependencies.md.
+FROM archlinux:base-devel@sha256:33c534be6c990710a878b37192904dd448e162ade06a201d95a80b42be2110c7
 
+ARG ARCH_REPOSITORY_DATE=2026/07/28
 ARG TOOLCHAIN_VERSION=10.3-2021.10
-ARG TOOLCHAIN_ARCHIVE=gcc-arm-none-eabi-${TOOLCHAIN_VERSION}-x86_64-linux.tar.bz2
-ARG TOOLCHAIN_URL="https://developer.arm.com/-/media/Files/downloads/gnu-rm/${TOOLCHAIN_VERSION}/${TOOLCHAIN_ARCHIVE}?rev=78196d3461ba4c9089a67b5f33edf82a&revision=78196d34-61ba-4c90-89a6-7b5f33edf82a&hash=B94A380A17942218223CD08320496FB1"
 
-RUN pacman -Syyu --noconfirm \
-    base-devel \
-    git \
-    python-pip \
-    python-pytest \
-    cppcheck \
-    ca-certificates \
-    curl \
-    tar
+COPY ci/container-packages.txt /tmp/container-packages.txt
 
-COPY ci/requirements-format.txt /tmp/requirements-format.txt
+RUN printf 'Server = https://archive.archlinux.org/repos/%s/$repo/os/$arch\n' \
+        "${ARCH_REPOSITORY_DATE}" > /etc/pacman.d/mirrorlist \
+    && pacman -Syyu --noconfirm --needed \
+        $(grep -Ev '^[[:space:]]*(#|$)' /tmp/container-packages.txt) \
+    && pacman -Scc --noconfirm
 
-RUN python -m pip install --break-system-packages --no-cache-dir \
-    -r /tmp/requirements-format.txt
+COPY ci/requirements-ci.txt /tmp/requirements-ci.txt
 
-RUN curl -L "${TOOLCHAIN_URL}" -o "/tmp/${TOOLCHAIN_ARCHIVE}" \
-    && tar -xjf "/tmp/${TOOLCHAIN_ARCHIVE}" -C /opt \
-    && rm "/tmp/${TOOLCHAIN_ARCHIVE}"
+RUN python -m pip install --break-system-packages --disable-pip-version-check \
+        --no-cache-dir -r /tmp/requirements-ci.txt
 
-ENV PATH="/opt/gcc-arm-none-eabi-${TOOLCHAIN_VERSION}/bin:${PATH}"
+COPY ci/install-arm-toolchain.sh ci/gcc-arm-none-eabi-10.3-2021.10.sha256 /tmp/toolchain/
+
+RUN bash /tmp/toolchain/install-arm-toolchain.sh /opt
+
+ENV BUILD_CONTAINER_BASE="archlinux:base-devel@sha256:33c534be6c990710a878b37192904dd448e162ade06a201d95a80b42be2110c7" \
+    BUILD_PACKAGE_SNAPSHOT="${ARCH_REPOSITORY_DATE}" \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PATH="/opt/gcc-arm-none-eabi-${TOOLCHAIN_VERSION}/bin:${PATH}" \
+    TZ=UTC
 
 WORKDIR /app
 COPY . .
-
-RUN git submodule update --init --recursive
