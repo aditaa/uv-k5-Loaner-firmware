@@ -90,6 +90,7 @@ def test_ci_suffixes_and_chirp_source_do_not_drift():
 	assert "REQUESTED_SUFFIX" not in main_workflow
 	assert 'SUFFIX="CI${' not in main_workflow
 	assert main_workflow.count("submodules: recursive") >= 2
+	assert 'TARGET=loaner-firmware VERSION_SUFFIX="${VERSION_SUFFIX}"' in main_workflow
 	assert "VERSION_SUFFIX: LNR" not in codeql_workflow
 	assert "< VERSION_SUFFIX" in main_workflow
 	assert "< VERSION_SUFFIX" in codeql_workflow

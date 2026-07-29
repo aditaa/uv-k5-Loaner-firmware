@@ -108,7 +108,7 @@ jobs:
         run: bash ci/install-arm-toolchain.sh "${RUNNER_TEMP}"
 
       - name: Build firmware with the release suffix
-        run: make -j"$(nproc)" VERSION_SUFFIX="${VERSION_SUFFIX}"
+        run: make -j"$(nproc)" TARGET=loaner-firmware VERSION_SUFFIX="${VERSION_SUFFIX}"
 
       - name: Verify built firmware with CHIRP
         run: >-
