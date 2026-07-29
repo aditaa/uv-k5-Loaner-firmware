@@ -15,12 +15,14 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 PACKER_PATH = REPOSITORY_ROOT / "fw-pack.py"
+CHIRP_PIN_MODULE_PATH = REPOSITORY_ROOT / "ci" / "chirp_pin.py"
+CHIRP_PIN_PATH = REPOSITORY_ROOT / "ci" / "chirp.lock.json"
 TAG_PATTERN = re.compile(
 	r"^v(?P<year>[0-9]{2})\.(?P<month>0[1-9]|1[0-2])(?:\.(?P<patch>0|[1-9][0-9]?))?$"
 )
 SUFFIX_PATTERN = re.compile(r"^[A-Z0-9]{7}$")
 BASE36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-MANIFEST_SCHEMA = 1
+MANIFEST_SCHEMA = 2
 
 
 class ReleaseError(ValueError):
@@ -31,6 +33,15 @@ def _load_packer():
 	spec = importlib.util.spec_from_file_location("firmware_packer", PACKER_PATH)
 	if spec is None or spec.loader is None:
 		raise RuntimeError(f"unable to load firmware packer from {PACKER_PATH}")
+	module = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	return module
+
+
+def _load_chirp_pin_module():
+	spec = importlib.util.spec_from_file_location("chirp_pin_for_release", CHIRP_PIN_MODULE_PATH)
+	if spec is None or spec.loader is None:
+		raise RuntimeError(f"unable to load CHIRP pin helper from {CHIRP_PIN_MODULE_PATH}")
 	module = importlib.util.module_from_spec(spec)
 	spec.loader.exec_module(module)
 	return module
@@ -132,6 +143,9 @@ def bundle_artifacts(
 		"schema": MANIFEST_SCHEMA,
 		"release_tag": release_tag,
 		"source_commit": source_commit,
+		"compatibility": {
+			"chirp": _load_chirp_pin_module().load_pin(CHIRP_PIN_PATH),
+		},
 		"build_environment": {
 			"container_base": os.environ.get("BUILD_CONTAINER_BASE", "unavailable"),
 			"package_snapshot": os.environ.get("BUILD_PACKAGE_SNAPSHOT", "unavailable"),
@@ -176,6 +190,10 @@ def verify_bundle(manifest_path: Path, expected_suffix: str, expected_tag: str |
 		raise ReleaseError("release manifest tag does not match the expected tag")
 	if expected_tag is not None and tag_to_suffix(expected_tag) != expected_suffix:
 		raise ReleaseError("expected release tag and suffix do not match")
+	try:
+		_load_chirp_pin_module().validate_pin(manifest.get("compatibility", {}).get("chirp"))
+	except ValueError as error:
+		raise ReleaseError(f"release manifest has invalid CHIRP compatibility metadata: {error}") from error
 
 	for filename, metadata in manifest.get("files", {}).items():
 		path = manifest_path.parent / filename

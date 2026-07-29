@@ -17,7 +17,6 @@ jobs:
       contents: read
       security-events: write
     env:
-      VERSION_SUFFIX: LNR2413
       SOURCE_COMMIT: ${{ github.sha }}
 
     strategy:
@@ -30,6 +29,12 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           submodules: recursive
+
+      - name: Load validated firmware suffix
+        run: |
+          SUFFIX="$(tr -d '\r\n' < VERSION_SUFFIX)"
+          python3 ci/release_artifacts.py validate-suffix "${SUFFIX}"
+          echo "VERSION_SUFFIX=${SUFFIX}" >> "${GITHUB_ENV}"
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@4187e74d05793876e9989daffde9c3e66b4acd07 # v3.37.3
