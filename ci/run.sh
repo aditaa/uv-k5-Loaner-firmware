@@ -51,6 +51,18 @@ fi
 
 : "${VERSION_SUFFIX:?VERSION_SUFFIX is required (set a 7-character value such as VERSION_SUFFIX=LNR2415 before running this script)}"
 
+SOURCE_COMMIT="${SOURCE_COMMIT:-$(git rev-parse HEAD)}"
+if [[ ! "${SOURCE_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
+	echo "SOURCE_COMMIT must be a full 40-character lowercase Git SHA" >&2
+	exit 1
+fi
+SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git show -s --format=%ct "${SOURCE_COMMIT}")}"
+if [[ ! "${SOURCE_DATE_EPOCH}" =~ ^[0-9]+$ ]]; then
+	echo "SOURCE_DATE_EPOCH must be a non-negative integer" >&2
+	exit 1
+fi
+export SOURCE_COMMIT SOURCE_DATE_EPOCH
+
 mkdir -p "${ARTIFACT_DIR}"
 rm -f \
 	"${ARTIFACT_DIR}"/loaner-firmware-* \
@@ -65,9 +77,17 @@ run_cppcheck
 echo "Running unit tests..."
 pytest -q
 
-echo "Building firmware..."
-make clean
-make TARGET=loaner-firmware VERSION_SUFFIX="${VERSION_SUFFIX}"
+echo "Build inputs:"
+echo "  source commit: ${SOURCE_COMMIT}"
+echo "  source date epoch: ${SOURCE_DATE_EPOCH}"
+echo "  firmware suffix: ${VERSION_SUFFIX}"
+echo "  container base: ${BUILD_CONTAINER_BASE:-native}"
+echo "  package snapshot: ${BUILD_PACKAGE_SNAPSHOT:-native}"
+python3 --version
+arm-none-eabi-gcc --version | head -n 1
+arm-none-eabi-ld --version | head -n 1
+
+bash "${ROOT}/ci/check-reproducible-build.sh"
 
 BIN_SIZE=$(stat --format="%s" loaner-firmware.bin)
 MAX_SIZE=${MAX_FIRMWARE_SIZE:-122880}
@@ -78,7 +98,6 @@ fi
 
 echo "Firmware size: ${BIN_SIZE} bytes (limit ${MAX_SIZE})"
 
-SOURCE_COMMIT="${SOURCE_COMMIT:-$(git rev-parse HEAD)}"
 BUNDLE_ARGS=(
 	--suffix "${VERSION_SUFFIX}"
 	--source-commit "${SOURCE_COMMIT}"
@@ -96,5 +115,7 @@ if [[ -n "${RELEASE_TAG:-}" ]]; then
 fi
 
 echo "Creating verified artifact bundle..."
-python3 ci/release_artifacts.py bundle "${BUNDLE_ARGS[@]}"
+MANIFEST_PATH="$(python3 ci/release_artifacts.py bundle "${BUNDLE_ARGS[@]}")"
 python3 ci/release_artifacts.py verify-bundle "${VERIFY_ARGS[@]}"
+echo "Recorded build manifest:"
+cat "${MANIFEST_PATH}"

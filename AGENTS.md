@@ -8,7 +8,7 @@
 
 ## Build, Test, and Development Commands
 - `make` (or `win_make.bat`) builds both the raw and required packed firmware; a packing or metadata failure fails the build.
-- `./compile-with-docker.sh` supplies a reproducible GCC 10.3.1 toolchain and writes artifacts to `compiled-firmware/`.
+- `./compile-with-docker.sh` uses the pinned container and checksum-verified GCC 10.3.1 toolchain, proves two clean builds are byte-identical, and writes artifacts to `compiled-firmware/`.
 - `make clean` clears objects before benchmarking size; `make flash`/`make debug` expect OpenOCD with a J-Link config.
 - `python3 fw-pack.py pack loaner-firmware.bin LNR24A5 loaner-firmware.packed.bin` injects metadata; use the `verify` subcommand before publishing an image.
 

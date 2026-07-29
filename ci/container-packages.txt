@@ -1,0 +1,9 @@
+# Versions are frozen by the dated Arch Linux Archive repository in Dockerfile.
+bzip2
+ca-certificates
+cppcheck
+curl
+python
+python-pip
+shellcheck
+tar
