@@ -13,13 +13,14 @@
 - `python3 fw-pack.py loaner-firmware.bin AUTHOR VERSION loaner-firmware.packed.bin` injects metadata so web flashers accept the build.
 
 ## Coding Style & Naming Conventions
-- Indent with tabs and place braces on the following line (Allman style); macros remain uppercase snake-case (`ENABLE_*`, `SYSCON_*`).
-- Follow existing naming: module globals use leading capitals (`gScreenLine`), static helpers stay lower_case, and files compile as C2x.
+- Indent with tabs; macros remain uppercase snake-case (`ENABLE_*`, `SYSCON_*`).
+- Use same-line opening braces for enums and structs, next-line opening braces for functions, and same-line braces for control statements. Declare pointers as `Type *name`, indent initializer elements by one tab, and column-align consecutive assignments.
+- Follow existing naming: module globals use leading capitals (`gScreenLine`), static helpers stay lower_case, and files compile as C11.
 - Order includes from local headers outward and wrap optional code in the matching `#ifdef ENABLE_*` guard.
 - Treat `-Werror` seriously—run `make` locally to keep the build warning-free.
 
 ## Testing Guidelines
-- No automated suite ships here; always compile locally and validate the affected features on hardware.
+- Run `pytest -q`, the changed-line clang-format check, cppcheck, and an ARM build before opening a pull request.
 - Perform smoke tests covering boot, menu navigation, audio, and any toggled `ENABLE_*` feature; log RF observations for signal work.
 - Record the manual steps and outcomes in your pull request to help reviewers reproduce them.
 

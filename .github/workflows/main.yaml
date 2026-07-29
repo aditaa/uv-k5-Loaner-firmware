@@ -35,7 +35,7 @@ jobs:
         run: python -m ruff check fw-pack.py tests
 
       - name: Shellcheck
-        run: shellcheck compile-with-docker.sh ci/run.sh
+        run: shellcheck compile-with-docker.sh ci/run.sh ci/check-clang-format.sh
 
   clang-format:
     runs-on: ubuntu-22.04
@@ -46,10 +46,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install clang-format
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-format
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned clang-format
+        run: python -m pip install -r ci/requirements-format.txt
 
       - name: Check formatting
         run: ci/check-clang-format.sh
