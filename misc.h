@@ -89,7 +89,6 @@ extern bool gSetting_500TX;
 extern bool gSetting_350EN;
 extern uint8_t gSetting_F_LOCK;
 extern bool gSetting_ScrambleEnable;
-extern uint8_t gSetting_F_LOCK;
 
 extern const uint32_t gDefaultAesKey[4];
 extern uint32_t gCustomAesKey[4];

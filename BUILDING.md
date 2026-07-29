@@ -1,6 +1,8 @@
 # Building the Loaner Firmware
 
 This document covers local builds, validation, firmware packing, and releases.
+The default feature choices and rules for removing optional code are recorded
+in [`docs/feature-inventory.md`](docs/feature-inventory.md).
 
 ## Prerequisites
 
