@@ -20,33 +20,31 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum
-{
-	UART_PROTOCOL_EEPROM_SIZE = 0x2000,
-	UART_PROTOCOL_READ_MAX_SIZE = 128,
-	UART_PROTOCOL_WRITE_MAX_SIZE = 128,
+enum {
+	UART_PROTOCOL_EEPROM_SIZE      = 0x2000,
+	UART_PROTOCOL_READ_MAX_SIZE    = 128,
+	UART_PROTOCOL_WRITE_MAX_SIZE   = 128,
 	UART_PROTOCOL_WRITE_BLOCK_SIZE = 8,
 };
 
-typedef enum
-{
+typedef enum {
 	UART_PROTOCOL_FRAME_INCOMPLETE,
 	UART_PROTOCOL_FRAME_INVALID,
 	UART_PROTOCOL_FRAME_COMMAND,
 } UART_PROTOCOL_FrameResult_t;
 
-bool UART_PROTOCOL_ValidateCommand(const uint8_t* pCommand, uint16_t CommandSize);
+bool UART_PROTOCOL_ValidateCommand(const uint8_t *pCommand, uint16_t CommandSize);
 
 UART_PROTOCOL_FrameResult_t UART_PROTOCOL_ParseFrame(
-    const uint8_t* pRingBuffer,
-    uint16_t RingBufferSize,
-    uint16_t ReadIndex,
-    uint16_t WriteIndex,
-    bool bIsEncrypted,
-    uint8_t* pCommand,
-    uint16_t CommandCapacity,
-    uint16_t* pNextReadIndex,
-    uint16_t* pCommandSize,
-    bool* pNextIsEncrypted);
+	const uint8_t *pRingBuffer,
+	uint16_t RingBufferSize,
+	uint16_t ReadIndex,
+	uint16_t WriteIndex,
+	bool bIsEncrypted,
+	uint8_t *pCommand,
+	uint16_t CommandCapacity,
+	uint16_t *pNextReadIndex,
+	uint16_t *pCommandSize,
+	bool *pNextIsEncrypted);
 
 #endif

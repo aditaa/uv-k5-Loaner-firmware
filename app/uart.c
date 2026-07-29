@@ -154,7 +154,7 @@ typedef struct
 	uint32_t Timestamp;
 } CMD_052F_t;
 
-static const uint8_t Obfuscation[16] = {0x16, 0x6C, 0x14, 0xE6, 0x2E, 0x91, 0x0D, 0x40, 0x21, 0x35, 0xD5, 0x40, 0x13, 0x03, 0xE9, 0x80};
+static const uint8_t Obfuscation[16] = { 0x16, 0x6C, 0x14, 0xE6, 0x2E, 0x91, 0x0D, 0x40, 0x21, 0x35, 0xD5, 0x40, 0x13, 0x03, 0xE9, 0x80 };
 
 static union {
 	uint8_t Buffer[256];
@@ -170,15 +170,15 @@ static uint16_t gUART_WriteIndex;
 static uint16_t UART_CommandSize;
 static bool bIsEncrypted = true;
 
-static void SendReply(void* pReply, uint16_t Size)
+static void SendReply(void *pReply, uint16_t Size)
 {
 	Header_t Header;
 	Footer_t Footer;
-	uint8_t* pBytes;
+	uint8_t *pBytes;
 	uint16_t i;
 
 	if (bIsEncrypted) {
-		pBytes = (uint8_t*)pReply;
+		pBytes = (uint8_t *)pReply;
 		for (i = 0; i < Size; i++) {
 			pBytes[i] ^= Obfuscation[i % 16];
 		}
@@ -202,7 +202,7 @@ static void SendReply(void* pReply, uint16_t Size)
 
 static void SendVersion(void)
 {
-	REPLY_0514_t Reply = {0};
+	REPLY_0514_t Reply = { 0 };
 
 	Reply.Header.ID = 0x0515;
 	Reply.Header.Size = sizeof(Reply.Data);
@@ -217,7 +217,7 @@ static void SendVersion(void)
 	SendReply(&Reply, sizeof(Reply));
 }
 
-static bool IsBadChallenge(const uint32_t* pKey, const uint32_t* pIn, const uint32_t* pResponse)
+static bool IsBadChallenge(const uint32_t *pKey, const uint32_t *pIn, const uint32_t *pResponse)
 {
 	uint8_t i;
 	uint32_t IV[4];
@@ -236,9 +236,9 @@ static bool IsBadChallenge(const uint32_t* pKey, const uint32_t* pIn, const uint
 	return false;
 }
 
-static void CMD_0514(const uint8_t* pBuffer)
+static void CMD_0514(const uint8_t *pBuffer)
 {
-	const CMD_0514_t* pCmd = (const CMD_0514_t*)pBuffer;
+	const CMD_0514_t *pCmd = (const CMD_0514_t *)pBuffer;
 
 	Timestamp = pCmd->Timestamp;
 #if defined(ENABLE_FMRADIO)
@@ -248,10 +248,10 @@ static void CMD_0514(const uint8_t* pBuffer)
 	SendVersion();
 }
 
-static void CMD_051B(const uint8_t* pBuffer)
+static void CMD_051B(const uint8_t *pBuffer)
 {
-	const CMD_051B_t* pCmd = (const CMD_051B_t*)pBuffer;
-	REPLY_051B_t Reply = {0};
+	const CMD_051B_t *pCmd = (const CMD_051B_t *)pBuffer;
+	REPLY_051B_t Reply     = { 0 };
 	bool bLocked = false;
 
 	if (pCmd->Timestamp != Timestamp) {
@@ -277,10 +277,10 @@ static void CMD_051B(const uint8_t* pBuffer)
 	SendReply(&Reply, pCmd->Size + 8);
 }
 
-static void CMD_051D(const uint8_t* pBuffer)
+static void CMD_051D(const uint8_t *pBuffer)
 {
-	const CMD_051D_t* pCmd = (const CMD_051D_t*)pBuffer;
-	REPLY_051D_t Reply = {0};
+	const CMD_051D_t *pCmd = (const CMD_051D_t *)pBuffer;
+	REPLY_051D_t Reply     = { 0 };
 	bool bReloadEeprom;
 	bool bIsLocked;
 
@@ -329,7 +329,7 @@ static void CMD_051D(const uint8_t* pBuffer)
 
 static void CMD_0527(void)
 {
-	REPLY_0527_t Reply = {0};
+	REPLY_0527_t Reply = { 0 };
 
 	Reply.Header.ID = 0x0528;
 	Reply.Header.Size = sizeof(Reply.Data);
@@ -342,7 +342,7 @@ static void CMD_0527(void)
 
 static void CMD_0529(void)
 {
-	REPLY_0529_t Reply = {0};
+	REPLY_0529_t Reply = { 0 };
 
 	Reply.Header.ID = 0x52A;
 	Reply.Header.Size = sizeof(Reply.Data);
@@ -351,10 +351,10 @@ static void CMD_0529(void)
 	SendReply(&Reply, sizeof(Reply));
 }
 
-static void CMD_052D(const uint8_t* pBuffer)
+static void CMD_052D(const uint8_t *pBuffer)
 {
-	const CMD_052D_t* pCmd = (const CMD_052D_t*)pBuffer;
-	REPLY_052D_t Reply = {0};
+	const CMD_052D_t *pCmd = (const CMD_052D_t *)pBuffer;
+	REPLY_052D_t Reply     = { 0 };
 	bool bIsLocked;
 
 #if defined(ENABLE_FMRADIO)
@@ -387,9 +387,9 @@ static void CMD_052D(const uint8_t* pBuffer)
 	SendReply(&Reply, sizeof(Reply));
 }
 
-static void CMD_052F(const uint8_t* pBuffer)
+static void CMD_052F(const uint8_t *pBuffer)
 {
-	const CMD_052F_t* pCmd = (const CMD_052F_t*)pBuffer;
+	const CMD_052F_t *pCmd = (const CMD_052F_t *)pBuffer;
 
 	gEeprom.DUAL_WATCH = DUAL_WATCH_OFF;
 	gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
@@ -422,17 +422,17 @@ bool UART_IsCommandAvailable(void)
 
 	DmaLength = DMA_CH0->ST & 0xFFFU;
 	UART_CommandSize = 0;
-	Result = UART_PROTOCOL_ParseFrame(
-	    UART_DMA_Buffer,
-	    sizeof(UART_DMA_Buffer),
-	    gUART_WriteIndex,
-	    DmaLength,
-	    bIsEncrypted,
-	    UART_Command.Buffer,
-	    sizeof(UART_Command.Buffer),
-	    &NextWriteIndex,
-	    &UART_CommandSize,
-	    &bNextIsEncrypted);
+	Result		 = UART_PROTOCOL_ParseFrame(
+			  UART_DMA_Buffer,
+			  sizeof(UART_DMA_Buffer),
+			  gUART_WriteIndex,
+			  DmaLength,
+			  bIsEncrypted,
+			  UART_Command.Buffer,
+			  sizeof(UART_Command.Buffer),
+			  &NextWriteIndex,
+			  &UART_CommandSize,
+			  &bNextIsEncrypted);
 
 	if (NextWriteIndex < gUART_WriteIndex) {
 		memset(UART_DMA_Buffer + gUART_WriteIndex, 0, sizeof(UART_DMA_Buffer) - gUART_WriteIndex);

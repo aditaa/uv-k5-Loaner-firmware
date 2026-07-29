@@ -6,10 +6,10 @@
 
 #include "app/uart_protocol.h"
 
-uint16_t CRC_Calculate(const void* pBuffer, uint16_t Size)
+uint16_t CRC_Calculate(const void *pBuffer, uint16_t Size)
 {
-	const uint8_t* pData = pBuffer;
-	uint16_t CRC = 0;
+	const uint8_t *pData = pBuffer;
+	uint16_t CRC	     = 0;
 	uint16_t i;
 	uint8_t Bit;
 
@@ -42,7 +42,7 @@ static int HexValue(char Value)
 	return -1;
 }
 
-static int DecodeHex(const char* pHex, uint8_t* pOutput, size_t OutputCapacity)
+static int DecodeHex(const char *pHex, uint8_t *pOutput, size_t OutputCapacity)
 {
 	const size_t HexLength = strlen(pHex);
 	size_t i;
@@ -53,7 +53,7 @@ static int DecodeHex(const char* pHex, uint8_t* pOutput, size_t OutputCapacity)
 
 	for (i = 0; i < HexLength / 2; i++) {
 		const int High = HexValue(pHex[i * 2]);
-		const int Low = HexValue(pHex[(i * 2) + 1]);
+		const int Low  = HexValue(pHex[(i * 2) + 1]);
 
 		if (High < 0 || Low < 0) {
 			return -1;
@@ -64,7 +64,7 @@ static int DecodeHex(const char* pHex, uint8_t* pOutput, size_t OutputCapacity)
 	return (int)(HexLength / 2);
 }
 
-static int ValidateCommand(const char* pHex)
+static int ValidateCommand(const char *pHex)
 {
 	uint8_t Command[256];
 	const int CommandSize = DecodeHex(pHex, Command, sizeof(Command));
@@ -77,15 +77,15 @@ static int ValidateCommand(const char* pHex)
 	return 0;
 }
 
-static int ParseFrame(const char* pHex, const char* pRingSizeText, const char* pStartText, const char* pEncryptedText)
+static int ParseFrame(const char *pHex, const char *pRingSizeText, const char *pStartText, const char *pEncryptedText)
 {
 	uint8_t Frame[256];
-	uint8_t RingBuffer[256] = {0};
-	uint8_t Command[256] = {0};
-	const int FrameLength = DecodeHex(pHex, Frame, sizeof(Frame));
+	uint8_t RingBuffer[256]	      = { 0 };
+	uint8_t Command[256]	      = { 0 };
+	const int FrameLength	      = DecodeHex(pHex, Frame, sizeof(Frame));
 	const uint16_t RingBufferSize = (uint16_t)strtoul(pRingSizeText, NULL, 0);
-	const uint16_t Start = (uint16_t)strtoul(pStartText, NULL, 0);
-	const bool bIsEncrypted = strtoul(pEncryptedText, NULL, 0) != 0;
+	const uint16_t Start	      = (uint16_t)strtoul(pStartText, NULL, 0);
+	const bool bIsEncrypted	      = strtoul(pEncryptedText, NULL, 0) != 0;
 	uint16_t CommandSize;
 	uint16_t NextReadIndex;
 	uint16_t WriteIndex;
@@ -103,22 +103,22 @@ static int ParseFrame(const char* pHex, const char* pRingSizeText, const char* p
 	WriteIndex = (Start + FrameLength) % RingBufferSize;
 
 	Result = UART_PROTOCOL_ParseFrame(
-	    RingBuffer,
-	    RingBufferSize,
-	    Start,
-	    WriteIndex,
-	    bIsEncrypted,
-	    Command,
-	    sizeof(Command),
-	    &NextReadIndex,
-	    &CommandSize,
-	    &bNextIsEncrypted);
+		RingBuffer,
+		RingBufferSize,
+		Start,
+		WriteIndex,
+		bIsEncrypted,
+		Command,
+		sizeof(Command),
+		&NextReadIndex,
+		&CommandSize,
+		&bNextIsEncrypted);
 
 	printf("%u %u %u %u %04X\n", Result, NextReadIndex, CommandSize, bNextIsEncrypted, CommandSize >= 2 ? Command[0] | (Command[1] << 8) : 0);
 	return 0;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	if (argc == 3 && strcmp(argv[1], "validate") == 0) {
 		return ValidateCommand(argv[2]);
