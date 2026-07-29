@@ -16,10 +16,9 @@
 
 #include "frequencies.h"
 #include "misc.h"
-#include "settings.h"
 
-const uint32_t LowerLimitFrequencyBandTable[7] = {
-	 5000000,
+const uint32_t LowerLimitFrequencyBandTable[BAND_COUNT] = {
+	5000000,
 	10800000,
 	13600000,
 	17400000,
@@ -28,8 +27,8 @@ const uint32_t LowerLimitFrequencyBandTable[7] = {
 	47000000,
 };
 
-const uint32_t MiddleFrequencyBandTable[7] = {
-	 6500000,
+const uint32_t MiddleFrequencyBandTable[BAND_COUNT] = {
+	6500000,
 	12200000,
 	15000000,
 	26000000,
@@ -38,8 +37,8 @@ const uint32_t MiddleFrequencyBandTable[7] = {
 	55000000,
 };
 
-const uint32_t UpperLimitFrequencyBandTable[7] = {
-	 7600000,
+const uint32_t UpperLimitFrequencyBandTable[BAND_COUNT] = {
+	7600000,
 	13599990,
 	17399990,
 	34999990,
@@ -100,6 +99,19 @@ FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency)
 	return BAND6_400MHz;
 }
 
+bool FREQUENCY_IsSupported(uint32_t Frequency)
+{
+	uint8_t Band;
+
+	for (Band = 0; Band < BAND_COUNT; Band++) {
+		if (Frequency >= LowerLimitFrequencyBandTable[Band] && Frequency <= UpperLimitFrequencyBandTable[Band]) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 uint8_t FREQUENCY_CalculateOutputPower(uint8_t TxpLow, uint8_t TxpMid, uint8_t TxpHigh, int32_t LowerLimit, int32_t Middle, int32_t UpperLimit, int32_t Frequency)
 {
 	if (Frequency <= LowerLimit) {
@@ -127,81 +139,9 @@ uint32_t FREQUENCY_FloorToStep(uint32_t Upper, uint32_t Step, uint32_t Lower)
 
 int FREQUENCY_Check(VFO_Info_t *pInfo)
 {
-	uint32_t Frequency;
-
 	if (pInfo->CHANNEL_SAVE > FREQ_CHANNEL_LAST) {
 		return -1;
 	}
-	Frequency = pInfo->pTX->Frequency;
-	switch (gSetting_F_LOCK) {
-	case F_LOCK_FCC:
-		if (Frequency >= 14400000 && Frequency <= 14799990) {
-			return 0;
-		}
-		if (Frequency >= 42000000 && Frequency <= 44999990) {
-			return 0;
-		}
-		break;
 
-	case F_LOCK_CE:
-		if (Frequency >= 14400000 && Frequency <= 14599990) {
-			return 0;
-		}
-		break;
-
-	case F_LOCK_GB:
-		if (Frequency >= 14400000 && Frequency <= 14799990) {
-			return 0;
-		}
-		if (Frequency >= 43000000 && Frequency <= 43999990) {
-			return 0;
-		}
-		break;
-
-	case F_LOCK_430:
-		if (Frequency >= 13600000 && Frequency <= 17399990) {
-			return 0;
-		}
-		if (Frequency >= 40000000 && Frequency <= 42999990) {
-			return 0;
-		}
-		break;
-
-	case F_LOCK_438:
-		if (Frequency >= 13600000 && Frequency <= 17399990) {
-			return 0;
-		}
-		if (Frequency >= 40000000 && Frequency <= 43799990) {
-			return 0;
-		}
-		break;
-
-	default:
-		if (Frequency >= 13600000 && Frequency <= 17399990) {
-			return 0;
-		}
-		if (Frequency >= 35000000 && Frequency <= 39999990) {
-			if (gSetting_350TX && gSetting_350EN) {
-				return 0;
-			}
-		}
-		if (Frequency >= 40000000 && Frequency <= 46999990) {
-			return 0;
-		}
-		if (Frequency >= 17400000 && Frequency <= 34999990) {
-			if (gSetting_200TX) {
-				return 0;
-			}
-		}
-
-		if (Frequency >= 47000000 && Frequency <= 60000000) {
-			if (gSetting_500TX) {
-				return 0;
-			}
-		}
-		break;
-	}
-
-	return -1;
+	return FREQUENCY_IsSupported(pInfo->pTX->Frequency) ? 0 : -1;
 }
-

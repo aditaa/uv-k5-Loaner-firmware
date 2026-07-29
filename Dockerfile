@@ -15,6 +15,11 @@ RUN pacman -Syyu --noconfirm \
     curl \
     tar
 
+COPY ci/requirements-format.txt /tmp/requirements-format.txt
+
+RUN python -m pip install --break-system-packages --no-cache-dir \
+    -r /tmp/requirements-format.txt
+
 RUN curl -L "${TOOLCHAIN_URL}" -o "/tmp/${TOOLCHAIN_ARCHIVE}" \
     && tar -xjf "/tmp/${TOOLCHAIN_ARCHIVE}" -C /opt \
     && rm "/tmp/${TOOLCHAIN_ARCHIVE}"
