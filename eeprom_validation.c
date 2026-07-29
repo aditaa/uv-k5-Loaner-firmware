@@ -15,23 +15,22 @@
 
 #include "eeprom_validation.h"
 
-enum
-{
-	BATTERY_CALIBRATION_MIN = 500U,
-	BATTERY_CALIBRATION_MAX = 3000U,
-	RSSI_CALIBRATION_MAX = 511U,
+enum {
+	BATTERY_CALIBRATION_MIN	  = 500U,
+	BATTERY_CALIBRATION_MAX	  = 3000U,
+	RSSI_CALIBRATION_MAX	  = 511U,
 	RSSI_CALIBRATION_DISABLED = 512U,
-	PA_CALIBRATION_MAX = 200U,
-	OUTPUT_POWER_HIGH = 2U,
+	PA_CALIBRATION_MAX	  = 200U,
+	OUTPUT_POWER_HIGH	  = 2U,
 };
 
 static const uint16_t BatteryCalibrationFallback[EEPROM_BATTERY_CALIBRATION_COUNT] = {
-    1258U,
-    1747U,
-    1876U,
-    1901U,
-    2004U,
-    2300U,
+	1258U,
+	1747U,
+	1876U,
+	1901U,
+	2004U,
+	2300U,
 };
 
 uint8_t EEPROM_ValidateU8(uint8_t Value, uint8_t UpperExclusive, uint8_t Fallback)

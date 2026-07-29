@@ -144,15 +144,6 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 
 	pRadio = &gEeprom.VfoInfo[VFO];
 
-	if (!gSetting_350EN) {
-		if (gEeprom.FreqChannel[VFO] == FREQ_CHANNEL_FIRST + BAND5_350MHz) {
-			gEeprom.FreqChannel[VFO] = FREQ_CHANNEL_FIRST + BAND6_400MHz;
-		}
-		if (gEeprom.ScreenChannel[VFO] == FREQ_CHANNEL_FIRST + BAND5_350MHz) {
-			gEeprom.ScreenChannel[VFO] = FREQ_CHANNEL_FIRST + BAND6_400MHz;
-		}
-	}
-
 	Channel = gEeprom.ScreenChannel[VFO];
 	if (IS_VALID_CHANNEL(Channel)) {
 #if defined(ENABLE_NOAA)
@@ -245,15 +236,15 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 	if (Configure == VFO_CONFIGURE_RELOAD || Channel >= FREQ_CHANNEL_FIRST) {
 		EEPROM_ReadBuffer(Base + 8, Data, 8);
 
-		Tmp = EEPROM_ValidateU8(Data[3] & 0x0FU, 3U, FREQUENCY_DEVIATION_OFF);
+		Tmp						 = EEPROM_ValidateU8(Data[3] & 0x0FU, 3U, FREQUENCY_DEVIATION_OFF);
 		gEeprom.VfoInfo[VFO].FREQUENCY_DEVIATION_SETTING = Tmp;
 		gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE = !!(Data[3] & 0x10);
 
-		Tmp = EEPROM_ValidateU8(Data[6], STEP_8_33kHz + 1U, STEP_25_0kHz);
+		Tmp				   = EEPROM_ValidateU8(Data[6], STEP_8_33kHz + 1U, STEP_25_0kHz);
 		gEeprom.VfoInfo[VFO].STEP_SETTING = Tmp;
 		gEeprom.VfoInfo[VFO].StepFrequency = StepFrequencyTable[Tmp];
 
-		Tmp = EEPROM_ValidateU8(Data[7], 11U, 0U);
+		Tmp				       = EEPROM_ValidateU8(Data[7], 11U, 0U);
 		gEeprom.VfoInfo[VFO].SCRAMBLING_TYPE = Tmp;
 		gEeprom.VfoInfo[VFO].ConfigRX.CodeType = (Data[2] >> 0) & 0x0F;
 		gEeprom.VfoInfo[VFO].ConfigTX.CodeType = (Data[2] >> 4) & 0x0F;
@@ -306,7 +297,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 		} else {
 			gEeprom.VfoInfo[VFO].FrequencyReverse = !!(Data[4] & 0x01);
 			gEeprom.VfoInfo[VFO].CHANNEL_BANDWIDTH = !!(Data[4] & 0x02);
-			gEeprom.VfoInfo[VFO].OUTPUT_POWER = EEPROM_ValidateOutputPower((Data[4] >> 2) & 0x03U);
+			gEeprom.VfoInfo[VFO].OUTPUT_POWER      = EEPROM_ValidateOutputPower((Data[4] >> 2) & 0x03U);
 			gEeprom.VfoInfo[VFO].BUSY_CHANNEL_LOCK = !!(Data[4] & 0x10);
 		}
 		if (Data[5] == 0xFF) {
@@ -360,13 +351,6 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 	} else {
 		gEeprom.VfoInfo[VFO].pRX = &gEeprom.VfoInfo[VFO].ConfigTX;
 		gEeprom.VfoInfo[VFO].pTX = &gEeprom.VfoInfo[VFO].ConfigRX;
-	}
-
-	if (!gSetting_350EN) {
-		FREQ_Config_t *pConfig = gEeprom.VfoInfo[VFO].pRX;
-		if (pConfig->Frequency >= 35000000 && pConfig->Frequency <= 39999990) {
-			pConfig->Frequency = 41001250;
-		}
 	}
 
 	if (gEeprom.VfoInfo[VFO].Band == BAND2_108MHz && gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE) {
@@ -423,17 +407,17 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo)
 	EEPROM_ReadBuffer(0x1ED0 + (Band * 0x10) + (pInfo->OUTPUT_POWER * 3), Txp, 3);
 	EEPROM_ValidatePaCalibration(Txp);
 	pInfo->TXP_CalculatedSetting =
-	    FREQUENCY_CalculateOutputPower(
-		Txp[0],
-		Txp[1],
-		Txp[2],
-		LowerLimitFrequencyBandTable[Band],
-		MiddleFrequencyBandTable[Band],
-		UpperLimitFrequencyBandTable[Band],
-		pInfo->pTX->Frequency);
+		FREQUENCY_CalculateOutputPower(
+			Txp[0],
+			Txp[1],
+			Txp[2],
+			LowerLimitFrequencyBandTable[Band],
+			MiddleFrequencyBandTable[Band],
+			UpperLimitFrequencyBandTable[Band],
+			pInfo->pTX->Frequency);
 }
 
-void RADIO_ApplyOffset(VFO_Info_t* pInfo)
+void RADIO_ApplyOffset(VFO_Info_t *pInfo)
 {
 	uint32_t Frequency;
 
