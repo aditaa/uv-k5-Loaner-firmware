@@ -146,6 +146,7 @@ jobs:
             SUFFIX="${REQUESTED_SUFFIX}"
           else
             SUFFIX="CI${GITHUB_SHA::5}"
+            SUFFIX="${SUFFIX^^}"
           fi
           python3 ci/release_artifacts.py validate-suffix "${SUFFIX}"
           echo "VERSION_SUFFIX=${SUFFIX}" >> "$GITHUB_ENV"
