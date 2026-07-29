@@ -18,33 +18,33 @@
 #include "misc.h"
 
 const uint32_t LowerLimitFrequencyBandTable[BAND_COUNT] = {
-    5000000,
-    10800000,
-    13600000,
-    17400000,
-    35000000,
-    40000000,
-    47000000,
+	5000000,
+	10800000,
+	13600000,
+	17400000,
+	35000000,
+	40000000,
+	47000000,
 };
 
 const uint32_t MiddleFrequencyBandTable[BAND_COUNT] = {
-    6500000,
-    12200000,
-    15000000,
-    26000000,
-    37000000,
-    43500000,
-    55000000,
+	6500000,
+	12200000,
+	15000000,
+	26000000,
+	37000000,
+	43500000,
+	55000000,
 };
 
 const uint32_t UpperLimitFrequencyBandTable[BAND_COUNT] = {
-    7600000,
-    13599990,
-    17399990,
-    34999990,
-    39999990,
-    46999990,
-    60000000,
+	7600000,
+	13599990,
+	17399990,
+	34999990,
+	39999990,
+	46999990,
+	60000000,
 };
 
 #if defined(ENABLE_NOAA)
@@ -137,7 +137,7 @@ uint32_t FREQUENCY_FloorToStep(uint32_t Upper, uint32_t Step, uint32_t Lower)
 	return Lower + (Step * Index);
 }
 
-int FREQUENCY_Check(VFO_Info_t* pInfo)
+int FREQUENCY_Check(VFO_Info_t *pInfo)
 {
 	if (pInfo->CHANNEL_SAVE > FREQ_CHANNEL_LAST) {
 		return -1;
