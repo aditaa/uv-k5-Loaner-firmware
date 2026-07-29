@@ -19,7 +19,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum {
+enum
+{
 	EEPROM_BATTERY_CALIBRATION_COUNT = 6U,
 	EEPROM_RSSI_CALIBRATION_COUNT = 4U,
 	EEPROM_PA_CALIBRATION_COUNT = 3U,
