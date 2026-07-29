@@ -120,6 +120,7 @@ UART_PROTOCOL_FrameResult_t UART_PROTOCOL_ParseFrame(
 	uint16_t CRC;
 	uint16_t ID;
 	uint16_t Index;
+	uint16_t PayloadSize;
 	uint16_t PayloadIndex;
 	uint16_t Size;
 	uint16_t i;
@@ -157,7 +158,12 @@ UART_PROTOCOL_FrameResult_t UART_PROTOCOL_ParseFrame(
 
 		Size	  = ReadRingUint16(pRingBuffer, RingBufferSize, AddRingIndex(Index, 2, RingBufferSize));
 		FrameSize = Size + 8U;
-		if (FrameSize > RingBufferSize || Size + 2U > CommandCapacity) {
+		if (FrameSize > RingBufferSize) {
+			*pNextReadIndex = AddRingIndex(Index, 1, RingBufferSize);
+			return UART_PROTOCOL_FRAME_INVALID;
+		}
+		PayloadSize = (uint16_t)(Size + 2U);
+		if (PayloadSize > CommandCapacity) {
 			*pNextReadIndex = AddRingIndex(Index, 1, RingBufferSize);
 			return UART_PROTOCOL_FRAME_INVALID;
 		}
@@ -172,7 +178,7 @@ UART_PROTOCOL_FrameResult_t UART_PROTOCOL_ParseFrame(
 			return UART_PROTOCOL_FRAME_INVALID;
 		}
 
-		for (i = 0; i < Size + 2U; i++) {
+		for (i = 0; i < PayloadSize; i++) {
 			pCommand[i] = pRingBuffer[AddRingIndex(PayloadIndex, i, RingBufferSize)];
 		}
 		*pNextReadIndex = AddRingIndex(Index, (uint16_t)FrameSize, RingBufferSize);
@@ -188,7 +194,7 @@ UART_PROTOCOL_FrameResult_t UART_PROTOCOL_ParseFrame(
 		}
 
 		if (bFrameIsEncrypted) {
-			for (i = 0; i < Size + 2U; i++) {
+			for (i = 0; i < PayloadSize; i++) {
 				pCommand[i] ^= Obfuscation[i % sizeof(Obfuscation)];
 			}
 		}
