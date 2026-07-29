@@ -81,8 +81,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 	gUpdateStatus = true;
 	switch (Key) {
 	case KEY_4:
-		gWasFKeyPressed = false;
-		gUpdateStatus = true;
 		gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 		gFlagStartScan = true;
 		gScanSingleFrequency = false;
@@ -92,8 +90,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 
 	default:
 		gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
-		gWasFKeyPressed = false;
-		gWasFKeyPressed = false;
 		break;
 	}
 }
@@ -122,24 +118,6 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
 			gAnotherVoiceID = VOICE_ID_SCANNING_STOP;
 		}
 		gRequestDisplayScreen = DISPLAY_MAIN;
-	}
-}
-
-static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld)
-{
-	if (!bKeyHeld && bKeyPressed) {
-		bool bFlag;
-
-		gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-		bFlag = gInputBoxIndex == 0;
-		gInputBoxIndex = 0;
-		if (bFlag) {
-			gFlagRefreshSetting = true;
-			gRequestDisplayScreen = DISPLAY_MENU;
-			gAnotherVoiceID = VOICE_ID_MENU;
-		} else {
-			gRequestDisplayScreen = DISPLAY_MAIN;
-		}
 	}
 }
 
@@ -275,19 +253,11 @@ void MAIN_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 		}
 	}
 
-	// TODO: ???
-	if (KEY_PTT < Key) {
-		Key = KEY_SIDE2;
-	}
-
 	switch (Key) {
 	case KEY_0: case KEY_1: case KEY_2: case KEY_3:
 	case KEY_4: case KEY_5: case KEY_6: case KEY_7:
 	case KEY_8: case KEY_9:
 		MAIN_Key_DIGITS(Key, bKeyPressed, bKeyHeld);
-		break;
-	case KEY_MENU:
-		MAIN_Key_MENU(bKeyPressed, bKeyHeld);
 		break;
 	case KEY_UP:
 		MAIN_Key_UP_DOWN(bKeyPressed, bKeyHeld, 1);
