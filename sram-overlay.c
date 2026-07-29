@@ -20,6 +20,8 @@
 #include "bsp/dp32g030/syscon.h"
 #include "sram-overlay.h"
 
+#define FLASH_POLL_LIMIT 1000000U
+
 static volatile uint32_t *pFlash = 0;
 uint32_t overlay_FLASH_MainClock;
 uint32_t overlay_FLASH_ClockMultiplier;
@@ -49,14 +51,17 @@ void overlay_FLASH_Start(void)
 	FLASH_START |= FLASH_START_START_BITS_START;
 }
 
-void overlay_FLASH_Init(FLASH_READ_MODE ReadMode)
+bool overlay_FLASH_Init(FLASH_READ_MODE ReadMode)
 {
-	overlay_FLASH_WakeFromDeepSleep();
+	if (!overlay_FLASH_WakeFromDeepSleep()) {
+		return false;
+	}
 	overlay_FLASH_SetMode(FLASH_MODE_READ_AHB);
 	overlay_FLASH_SetReadMode(ReadMode);
 	overlay_FLASH_SetEraseTime();
 	overlay_FLASH_SetProgramTime();
 	overlay_FLASH_Lock();
+	return true;
 }
 
 void overlay_FLASH_MaskLock(void)
@@ -90,11 +95,14 @@ uint32_t overlay_FLASH_ReadByAHB(uint32_t Offset)
 	return pFlash[(Offset & ~3U) / 4];
 }
 
-uint32_t overlay_FLASH_ReadByAPB(uint32_t Offset)
+bool overlay_FLASH_ReadByAPB(uint32_t Offset, uint32_t *pData)
 {
-	uint32_t Data;
+	uint32_t Timeout = FLASH_POLL_LIMIT;
 
 	while (overlay_FLASH_IsBusy()) {
+		if (Timeout-- == 0U) {
+			return false;
+		}
 	}
 
 	overlay_FLASH_SetMode(FLASH_MODE_READ_APB);
@@ -102,15 +110,21 @@ uint32_t overlay_FLASH_ReadByAPB(uint32_t Offset)
 
 	overlay_FLASH_Start();
 
+	Timeout = FLASH_POLL_LIMIT;
 	while (overlay_FLASH_IsBusy()) {
+		if (Timeout-- == 0U) {
+			overlay_FLASH_SetMode(FLASH_MODE_READ_AHB);
+			overlay_FLASH_Lock();
+			return false;
+		}
 	}
 
-	Data = FLASH_RDATA;
+	*pData = FLASH_RDATA;
 
 	overlay_FLASH_SetMode(FLASH_MODE_READ_AHB);
 	overlay_FLASH_Lock();
 
-	return Data;
+	return true;
 }
 
 void overlay_FLASH_SetArea(FLASH_AREA Area)
@@ -132,11 +146,17 @@ void overlay_FLASH_SetEraseTime(void)
 	FLASH_ERASETIME = ((overlay_FLASH_ClockMultiplier & 0xFFFFU) * 0x1A00000U) + (overlay_FLASH_ClockMultiplier * 3600U);
 }
 
-void overlay_FLASH_WakeFromDeepSleep(void)
+bool overlay_FLASH_WakeFromDeepSleep(void)
 {
+	uint32_t Timeout = FLASH_POLL_LIMIT;
+
 	FLASH_CFG = (FLASH_CFG & ~FLASH_CFG_DEEP_PD_MASK) | FLASH_CFG_DEEP_PD_BITS_NORMAL;
 	while (!overlay_FLASH_IsInitComplete()) {
+		if (Timeout-- == 0U) {
+			return false;
+		}
 	}
+	return true;
 }
 
 void overlay_FLASH_SetMode(FLASH_MODE Mode)
@@ -178,16 +198,32 @@ uint32_t overlay_FLASH_ReadNvrWord(uint32_t Offset)
 	return Data;
 }
 
-void overlay_FLASH_ConfigureTrimValues(void)
+bool overlay_FLASH_ConfigureTrimValues(void)
 {
 	uint32_t Data;
 
 	overlay_FLASH_SetArea(FLASH_AREA_NVR);
 
-	SYSCON_CHIP_ID0 = overlay_FLASH_ReadByAPB(0xF018);
-	SYSCON_CHIP_ID1 = overlay_FLASH_ReadByAPB(0xF01C);
-	SYSCON_CHIP_ID2 = overlay_FLASH_ReadByAPB(0xF020);
-	SYSCON_CHIP_ID3 = overlay_FLASH_ReadByAPB(0xF024);
+	if (!overlay_FLASH_ReadByAPB(0xF018, &Data)) {
+		overlay_FLASH_SetArea(FLASH_AREA_MAIN);
+		return false;
+	}
+	SYSCON_CHIP_ID0 = Data;
+	if (!overlay_FLASH_ReadByAPB(0xF01C, &Data)) {
+		overlay_FLASH_SetArea(FLASH_AREA_MAIN);
+		return false;
+	}
+	SYSCON_CHIP_ID1 = Data;
+	if (!overlay_FLASH_ReadByAPB(0xF020, &Data)) {
+		overlay_FLASH_SetArea(FLASH_AREA_MAIN);
+		return false;
+	}
+	SYSCON_CHIP_ID2 = Data;
+	if (!overlay_FLASH_ReadByAPB(0xF024, &Data)) {
+		overlay_FLASH_SetArea(FLASH_AREA_MAIN);
+		return false;
+	}
+	SYSCON_CHIP_ID3 = Data;
 
 	SYSCON_RC_FREQ_DELTA = overlay_FLASH_ReadByAHB(0x07C8);
 	SYSCON_VREF_VOLT_DELTA = overlay_FLASH_ReadByAHB(0x07C4);
@@ -206,5 +242,5 @@ void overlay_FLASH_ConfigureTrimValues(void)
 	SARADC_CALIB_OFFSET = ((Data & 0xFFFF) << SARADC_CALIB_OFFSET_OFFSET_SHIFT) & SARADC_CALIB_OFFSET_OFFSET_MASK;
 	SARADC_CALIB_KD = (((Data >> 16) & 0xFFFF) << SARADC_CALIB_KD_KD_SHIFT) & SARADC_CALIB_KD_KD_MASK;
 	overlay_FLASH_SetArea(FLASH_AREA_MAIN);
+	return true;
 }
-

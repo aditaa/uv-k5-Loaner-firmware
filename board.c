@@ -34,6 +34,7 @@
 #include "driver/eeprom.h"
 #include "driver/flash.h"
 #include "driver/gpio.h"
+#include "driver/hardware.h"
 #include "driver/system.h"
 #include "driver/st7565.h"
 #include "eeprom_validation.h"
@@ -48,12 +49,13 @@
 #if defined(ENABLE_OVERLAY)
 void BOARD_FLASH_Init(void)
 {
-	FLASH_Init(FLASH_READ_MODE_1_CYCLE);
-	FLASH_ConfigureTrimValues();
+	if (!FLASH_Init(FLASH_READ_MODE_1_CYCLE) || !FLASH_ConfigureTrimValues()) {
+		return;
+	}
 	SYSTEM_ConfigureClocks();
 	overlay_FLASH_MainClock = 48000000;
 	overlay_FLASH_ClockMultiplier = 48;
-	FLASH_Init(FLASH_READ_MODE_2_CYCLE);
+	(void)FLASH_Init(FLASH_READ_MODE_2_CYCLE);
 }
 #endif
 
@@ -483,14 +485,22 @@ void BOARD_ADC_Init(void)
 	ADC_SoftReset();
 }
 
-void BOARD_ADC_GetBatteryInfo(uint16_t *pVoltage, uint16_t *pCurrent)
+bool BOARD_ADC_GetBatteryInfo(uint16_t *pVoltage, uint16_t *pCurrent)
 {
+	uint32_t Timeout = 100000U;
+
 	ADC_Start();
 
 	while (!ADC_CheckEndOfConversion(ADC_CH9)) {
+		if (Timeout-- == 0U) {
+			ADC_SoftReset();
+			HARDWARE_ReportFault(HARDWARE_FAULT_ADC);
+			return false;
+		}
 	}
 	*pVoltage = ADC_GetValue(ADC_CH4);
 	*pCurrent = ADC_GetValue(ADC_CH9);
+	return true;
 }
 
 void BOARD_Init(void)

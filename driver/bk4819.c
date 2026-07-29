@@ -18,6 +18,7 @@
 #include "bsp/dp32g030/gpio.h"
 #include "bsp/dp32g030/portcon.h"
 #include "driver/gpio.h"
+#include "driver/hardware.h"
 #include "driver/system.h"
 #include "driver/systick.h"
 
@@ -831,10 +832,11 @@ uint8_t BK4819_GetCTCType(void)
 }
 
 #if defined(ENABLE_AIRCOPY)
-void BK4819_SendFSKData(uint16_t *pData)
+bool BK4819_SendFSKData(uint16_t *pData)
 {
 	uint8_t i;
 	uint8_t Timeout;
+	bool Complete = false;
 
 	Timeout = 200;
 
@@ -854,6 +856,7 @@ void BK4819_SendFSKData(uint16_t *pData)
 
 	while (Timeout) {
 		if (BK4819_ReadRegister(BK4819_REG_0C) & 1U) {
+			Complete = true;
 			break;
 		}
 		SYSTEM_DelayMs(5);
@@ -863,6 +866,10 @@ void BK4819_SendFSKData(uint16_t *pData)
 	BK4819_WriteRegister(BK4819_REG_02, 0);
 	SYSTEM_DelayMs(20);
 	BK4819_ResetFSK();
+	if (!Complete) {
+		HARDWARE_ReportFault(HARDWARE_FAULT_BK4819);
+	}
+	return Complete;
 }
 
 void BK4819_PrepareFSKReceive(void)
@@ -964,4 +971,3 @@ void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code)
 	BK4819_PlayDTMF(Code);
 	BK4819_ExitTxMute();
 }
-

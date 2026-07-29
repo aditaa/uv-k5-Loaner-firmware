@@ -40,6 +40,7 @@ ifeq ($(ENABLE_OVERLAY),1)
 OBJS += driver/flash.o
 endif
 OBJS += driver/gpio.o
+OBJS += driver/hardware.o
 OBJS += driver/i2c.o
 OBJS += driver/keyboard.o
 OBJS += driver/spi.o

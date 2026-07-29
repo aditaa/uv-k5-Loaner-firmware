@@ -125,7 +125,7 @@ uint8_t BK4819_GetDTMF_5TONE_Code(void);
 uint8_t BK4819_GetCDCSSCodeType(void);
 uint8_t BK4819_GetCTCType(void);
 
-void BK4819_SendFSKData(uint16_t *pData);
+bool BK4819_SendFSKData(uint16_t *pData);
 void BK4819_PrepareFSKReceive(void);
 
 void BK4819_PlayRoger(void);
@@ -138,4 +138,3 @@ void BK4819_SetScrambleFrequencyControlWord(uint32_t Frequency);
 void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code);
 
 #endif
-

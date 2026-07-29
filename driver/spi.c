@@ -18,6 +18,7 @@
 #include "bsp/dp32g030/spi.h"
 #include "bsp/dp32g030/syscon.h"
 #include "bsp/dp32g030/irq.h"
+#include "driver/hardware.h"
 #include "driver/spi.h"
 
 void SPI0_Init(void)
@@ -43,18 +44,25 @@ void SPI0_Init(void)
 	SPI_Enable(&SPI0->CR);
 }
 
-void SPI_WaitForUndocumentedTxFifoStatusBit(void)
+bool SPI_WaitForTxFifoSpace(void)
 {
-	uint32_t Timeout;
+	if (HARDWARE_WaitForRegister(&SPI0->FIFOST, SPI_FIFOST_TFF_MASK, SPI_FIFOST_TFF_BITS_NOT_FULL, 100000U)) {
+		return true;
+	}
 
-	Timeout = 0;
-	do {
-		// Undocumented bit!
-		if ((SPI0->IF & 0x20) == 0) {
-			break;
-		}
-		Timeout++;
-	} while (Timeout <= 100000);
+	HARDWARE_ReportFault(HARDWARE_FAULT_SPI);
+	return false;
+}
+
+bool SPI_WaitForUndocumentedTxFifoStatusBit(void)
+{
+	// Undocumented bit: set while the transmit path is still active.
+	if (HARDWARE_WaitForRegister(&SPI0->IF, 0x20U, 0U, 100000U)) {
+		return true;
+	}
+
+	HARDWARE_ReportFault(HARDWARE_FAULT_SPI);
+	return false;
 }
 
 void SPI_Disable(volatile uint32_t *pCR)
@@ -113,4 +121,3 @@ void SPI_Enable(volatile uint32_t *pCR)
 {
 	*pCR = (*pCR & ~SPI_CR_SPE_MASK) | SPI_CR_SPE_BITS_ENABLE;
 }
-
