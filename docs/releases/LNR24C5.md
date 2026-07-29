@@ -14,7 +14,8 @@ and release-process work merged since `v24.12.4`.
 - Add bounded recovery for I2C, SPI, UART, display, flash, AES, and BK4819
   peripheral waits so a stalled device cannot trap the firmware forever.
 - Pin and continuously test the compatible upstream CHIRP UV-K5 driver path,
-  including the behavior discussed in `kk7ds/chirp#1414`.
+  including the behavior discussed in
+  [kk7ds/chirp#1414](https://github.com/kk7ds/chirp/pull/1414).
 - Make ARM builds reproducible in a pinned container and publish verified raw,
   packed, manifest, and SHA-256 artifacts whose tag and embedded identifiers
   must agree.
