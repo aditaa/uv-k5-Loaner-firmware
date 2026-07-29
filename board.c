@@ -673,16 +673,18 @@ void BOARD_EEPROM_Init(void)
 
 	// 0F40..0F47
 	EEPROM_ReadBuffer(0x0F40, Data, 8);
-	gSetting_F_LOCK         = (Data[0] < 6) ? Data[0] : F_LOCK_OFF;
+	// Regional transmit locks are retained in the EEPROM layout for CHIRP
+	// compatibility, but the loaner firmware always starts fully unlocked.
+	gSetting_F_LOCK         = F_LOCK_OFF;
 
 	gUpperLimitFrequencyBandTable = UpperLimitFrequencyBandTable;
 	gLowerLimitFrequencyBandTable = LowerLimitFrequencyBandTable;
 
-	gSetting_350TX          = (Data[1] < 2) ? Data[1] : true;
+	gSetting_350TX          = true;
 	gSetting_KILLED         = (Data[2] < 2) ? Data[2] : false;
-	gSetting_200TX          = (Data[3] < 2) ? Data[3] : false;
-	gSetting_500TX          = (Data[4] < 2) ? Data[4] : false;
-	gSetting_350EN          = (Data[5] < 2) ? Data[5] : true;
+	gSetting_200TX          = true;
+	gSetting_500TX          = true;
+	gSetting_350EN          = true;
 	gSetting_ScrambleEnable = (Data[6] < 2) ? Data[6] : true;
 
 	if (IS_FREQ_CHANNEL(gEeprom.ScreenChannel[0])) {

@@ -143,15 +143,6 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 
 	pRadio = &gEeprom.VfoInfo[VFO];
 
-	if (!gSetting_350EN) {
-		if (gEeprom.FreqChannel[VFO] == FREQ_CHANNEL_FIRST + BAND5_350MHz) {
-			gEeprom.FreqChannel[VFO] = FREQ_CHANNEL_FIRST + BAND6_400MHz;
-		}
-		if (gEeprom.ScreenChannel[VFO] == FREQ_CHANNEL_FIRST + BAND5_350MHz) {
-			gEeprom.ScreenChannel[VFO] = FREQ_CHANNEL_FIRST + BAND6_400MHz;
-		}
-	}
-
 	Channel = gEeprom.ScreenChannel[VFO];
 	if (IS_VALID_CHANNEL(Channel)) {
 #if defined(ENABLE_NOAA)
@@ -368,13 +359,6 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 	} else {
 		gEeprom.VfoInfo[VFO].pRX = &gEeprom.VfoInfo[VFO].ConfigTX;
 		gEeprom.VfoInfo[VFO].pTX = &gEeprom.VfoInfo[VFO].ConfigRX;
-	}
-
-	if (!gSetting_350EN) {
-		FREQ_Config_t *pConfig = gEeprom.VfoInfo[VFO].pRX;
-		if (pConfig->Frequency >= 35000000 && pConfig->Frequency <= 39999990) {
-			pConfig->Frequency = 41001250;
-		}
 	}
 
 	if (gEeprom.VfoInfo[VFO].Band == BAND2_108MHz && gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE) {

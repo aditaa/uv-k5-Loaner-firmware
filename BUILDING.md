@@ -65,6 +65,9 @@ python3 fw-pack.py loaner-firmware.bin LNR2415 loaner-firmware.packed.bin
 ## Feature Toggles
 Feature flags live near the top of `Makefile` as `ENABLE_*` macros. The loaner build keeps the optional blocks (`AIRCOPY`, `ALARM`, `FMRADIO`, `NOAA`, `TX1750`, and the SRAM overlay) disabled by default to shrink the binary and hide extra menus. Adjust the macros if you need those features, then run `make clean` before comparing binary size after any toggle changes.
 
+## Transmit Policy
+The loaner build does not enforce the legacy regional `F LOCK` presets or the `200TX`, `350TX`, `350EN`, and `500TX` EEPROM switches. Those fields remain in the EEPROM layout for CHIRP compatibility, but runtime transmit validation only checks that a programmed transmit frequency falls inside one of the firmware's defined tuning bands: 50–76 MHz or 108–600 MHz. The unsupported 76–108 MHz gap, out-of-range frequencies, and non-transmittable special channel types remain blocked.
+
 ## Firmware Metadata and Releases
 - A successful build leaves you with `firmware.bin` (raw) and, when Python and `crcmod` are available, `firmware.packed.bin`. The packed image is what Quansheng's loader validates.
 - Use `fw-pack.py` to stamp a release tag into the packed image. `make` already invokes the script with `VERSION_SUFFIX`, so the packed file inherits the same banner. To repack manually, pass the suffix yourself (example above).

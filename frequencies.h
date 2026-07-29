@@ -17,6 +17,7 @@
 #ifndef FREQUENCIES_H
 #define FREQUENCIES_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "radio.h"
 
@@ -28,22 +29,23 @@ enum FREQUENCY_Band_t {
 	BAND5_350MHz,
 	BAND6_400MHz,
 	BAND7_470MHz,
+	BAND_COUNT,
 };
 
 typedef enum FREQUENCY_Band_t FREQUENCY_Band_t;
 
-extern const uint32_t LowerLimitFrequencyBandTable[7];
-extern const uint32_t MiddleFrequencyBandTable[7];
-extern const uint32_t UpperLimitFrequencyBandTable[7];
+extern const uint32_t LowerLimitFrequencyBandTable[BAND_COUNT];
+extern const uint32_t MiddleFrequencyBandTable[BAND_COUNT];
+extern const uint32_t UpperLimitFrequencyBandTable[BAND_COUNT];
 #if defined(ENABLE_NOAA)
 extern const uint32_t NoaaFrequencyTable[10];
 #endif
 extern const uint16_t StepFrequencyTable[7];
 
 FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency);
+bool FREQUENCY_IsSupported(uint32_t Frequency);
 uint8_t FREQUENCY_CalculateOutputPower(uint8_t TxpLow, uint8_t TxpMid, uint8_t TxpHigh, int32_t LowerLimit, int32_t Middle, int32_t UpperLimit, int32_t Frequency);
 uint32_t FREQUENCY_FloorToStep(uint32_t Upper, uint32_t Step, uint32_t Lower);
 int FREQUENCY_Check(VFO_Info_t *pInfo);
 
 #endif
-
