@@ -1,0 +1,71 @@
+name: Firmware bug
+description: Report a reproducible firmware, programming, build, or release problem.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping make the loaner firmware safer and easier to use.
+  - type: input
+    id: version
+    attributes:
+      label: Firmware version
+      description: Release tag, displayed OEFW suffix, or commit SHA.
+      placeholder: OEFW-LNR2415 or 6839a25
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Radio / RF / transmit
+        - UI / keypad / audio
+        - EEPROM / settings
+        - UART / CHIRP programming
+        - Build / CI / release artifacts
+        - USB / power / charging
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the expected behavior and the actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Flash ...
+        2. Configure ...
+        3. Press ...
+    validations:
+      required: true
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Hardware and test evidence
+      description: Radio model/revision, cable, battery/power source, instruments, logs, screenshots, and RF observations. Say "not hardware-tested" when applicable.
+  - type: dropdown
+    id: release
+    attributes:
+      label: Release impact
+      options:
+        - Blocks the next release
+        - Should be fixed soon but does not block release
+        - Can wait for a later release
+        - Unsure
+    validations:
+      required: true
+  - type: checkboxes
+    id: responsibility
+    attributes:
+      label: Operating responsibility
+      options:
+        - label: I understand that operators and programmers are responsible for lawful frequencies, power, modes, and equipment use.
+          required: true

@@ -76,17 +76,13 @@ Tip: Keep a CHIRP image with the baseline loaner plan in source control so teams
 ## Field Notes
 - Carry one handset that stayed stock as a control; it helps confirm the loader steps when training new volunteers.
 - Log which firmware release you flashed (the welcome banner shows the tag) alongside the ICS-205 so future updates are easy to track.
-- If a user reports odd audio or RF behaviour, power cycle and reseat the battery first; the firmware keeps settings read-only so faults are usually hardware.
+- If a user reports odd audio or RF behaviour, record the firmware suffix and reproduction steps, then power-cycle and reseat the battery before deeper diagnosis.
 
 ## Need to Modify the Firmware?
 All developer-facing build and packaging details live in `BUILDING.md`. Start there if you need to regenerate binaries or adjust feature toggles.
 
 ## Contributing
-Open issues or PRs if you spot regressions that impact the loaner workflow. Documentation updates (especially CHIRP workflows and loaner field notes) are welcome.
-
-## Project Backlog Snapshot
-- `docs/issues/issue-export.json` captures the high-level loaner backlog for offline reference.
-- `docs/issues/issues-detailed.json` preserves the matching GitHub issue metadata export.
+Open issues or PRs if you spot regressions that impact the loaner workflow. See [CONTRIBUTING.md](CONTRIBUTING.md) for the canonical build, validation, firmware-size, CHIRP, and hardware-test requirements.
 
 ## Credits
 Based on the open-source efforts by DualTachyon, OneOfEleven, Fagci, and the wider UV-K5 community. This fork simply repackages their work for the loaner-radio use case.

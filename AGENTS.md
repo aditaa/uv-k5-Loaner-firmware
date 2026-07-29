@@ -10,12 +10,12 @@
 - `make` (or `win_make.bat`) builds both the raw and required packed firmware; a packing or metadata failure fails the build.
 - `./compile-with-docker.sh` uses the pinned container and checksum-verified GCC 10.3.1 toolchain, proves two clean builds are byte-identical, and writes artifacts to `compiled-firmware/`.
 - `make clean` clears objects before benchmarking size; `make flash`/`make debug` expect OpenOCD with a J-Link config.
-- `python3 fw-pack.py pack loaner-firmware.bin LNR24A5 loaner-firmware.packed.bin` injects metadata; use the `verify` subcommand before publishing an image.
+- `python3 fw-pack.py pack loaner-firmware.bin LNR2415 loaner-firmware.packed.bin` injects metadata; use the `verify` subcommand before publishing an image.
 
 ## Coding Style & Naming Conventions
 - Indent with tabs; macros remain uppercase snake-case (`ENABLE_*`, `SYSCON_*`).
 - Use same-line opening braces for enums and structs, next-line opening braces for functions, and same-line braces for control statements. Declare pointers as `Type *name`, indent initializer elements by one tab, and column-align consecutive assignments.
-- Follow existing naming: module globals use leading capitals (`gScreenLine`), static helpers stay lower_case, and files compile as C11.
+- Follow existing naming: module globals use the `g` prefix (`gScreenLine`), static helpers stay lower_case, and files compile as C11.
 - Order includes from local headers outward and wrap optional code in the matching `#ifdef ENABLE_*` guard.
 - Treat `-Werror` seriously—run `make` locally to keep the build warning-free.
 
