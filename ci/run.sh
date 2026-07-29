@@ -75,7 +75,7 @@ echo "Checking C formatting..."
 run_cppcheck
 
 echo "Running unit tests..."
-pytest -q
+HOST_TESTS_REQUIRED=1 HOST_SANITIZERS=address,undefined pytest -q
 
 echo "Build inputs:"
 echo "  source commit: ${SOURCE_COMMIT}"

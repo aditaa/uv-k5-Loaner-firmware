@@ -1,20 +1,14 @@
-import shutil
 import subprocess
 import textwrap
-from pathlib import Path
 
 import pytest
 
+from tests.host_tools import ROOT, compile_c, host_runtime_environment
 
-ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(scope="module")
 def frequency_policy_binary(tmp_path_factory):
-    compiler = shutil.which("cc") or shutil.which("gcc")
-    if compiler is None:
-        pytest.skip("A host C compiler is required for the frequency policy test")
-
     build_dir = tmp_path_factory.mktemp("frequency-policy")
     harness = build_dir / "frequency_policy_harness.c"
     executable = build_dir / "frequency_policy_harness"
@@ -54,22 +48,10 @@ def frequency_policy_binary(tmp_path_factory):
         ),
         encoding="utf-8",
     )
-    subprocess.run(
-        [
-            compiler,
-            "-std=c11",
-            "-Wall",
-            "-Werror",
-            "-I",
-            str(ROOT),
-            str(ROOT / "frequencies.c"),
-            str(harness),
-            "-o",
-            str(executable),
-        ],
-        check=True,
+    return compile_c(
+        output=executable,
+        sources=[ROOT / "frequencies.c", harness],
     )
-    return executable
 
 
 def run_policy(executable, frequency, channel=0):
@@ -78,6 +60,7 @@ def run_policy(executable, frequency, channel=0):
         check=True,
         capture_output=True,
         text=True,
+        env=host_runtime_environment(),
     )
     supported, check_result = result.stdout.split()
     return supported == "1", int(check_result)

@@ -1,10 +1,8 @@
 import ctypes
-import shutil
-import subprocess
-import sys
-from pathlib import Path
 
 import pytest
+
+from tests.host_tools import ROOT, compile_c, shared_library_path
 
 
 BATTERY_FALLBACK = [1258, 1747, 1876, 1901, 2004, 2300]
@@ -14,29 +12,13 @@ PA_FALLBACK = [0, 0, 0]
 
 @pytest.fixture(scope="session")
 def validation_library(tmp_path_factory):
-    compiler = shutil.which("gcc")
-    if compiler is None:
-        pytest.skip("gcc is required for the EEPROM validation host tests")
-
-    repo_root = Path(__file__).resolve().parents[1]
     output_dir = tmp_path_factory.mktemp("eeprom-validation")
-    library = output_dir / ("eeprom_validation.dll" if sys.platform == "win32" else "libeeprom_validation.so")
-    command = [
-        compiler,
-        "-shared",
-        "-std=c11",
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-I",
-        str(repo_root),
-        str(repo_root / "eeprom_validation.c"),
-        "-o",
-        str(library),
-    ]
-    if sys.platform != "win32":
-        command.insert(2, "-fPIC")
-    subprocess.run(command, check=True)
+    library = shared_library_path(output_dir, "eeprom_validation")
+    compile_c(
+        output=library,
+        sources=[ROOT / "eeprom_validation.c"],
+        shared=True,
+    )
 
     loaded = ctypes.CDLL(str(library))
     loaded.EEPROM_ValidateU8.argtypes = [ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint8]

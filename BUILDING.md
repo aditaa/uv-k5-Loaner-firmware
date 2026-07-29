@@ -57,6 +57,10 @@ VERSION_SUFFIX=LNR2415 ci/run.sh
 
 GitHub Actions runs tests under Python 3.10.18 and 3.12.11, checks CHIRP compatibility, runs CodeQL, and performs the Docker firmware build. Docker builds export the changed-line formatting diff on the host and mount it read-only, so Git history never enters the image context. Keep the firmware below `MAX_FIRMWARE_SIZE` (122880 bytes by default).
 
+See `docs/host-testing.md` for the pure-logic/hardware boundary, reusable fake
+platform adapters, sanitizer mode, and the command for running one host C test
+module.
+
 ## Release Version Mapping
 
 Release tags must use `vYY.MM[.PATCH]`. They map to the seven-character suffix `LNRYYMP`, where month and patch each use one base-36 digit (`0-9`, then `A-Z`):
