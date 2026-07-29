@@ -66,6 +66,7 @@ OBJS += app/menu.o
 OBJS += app/scanner.o
 ifeq ($(ENABLE_UART),1)
 OBJS += app/uart.o
+OBJS += app/uart_protocol.o
 endif
 OBJS += audio.o
 OBJS += bitmaps.o

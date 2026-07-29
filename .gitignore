@@ -1,7 +1,7 @@
 *.o
 *.d
+__pycache__/
 /compiled-firmware
 link-overlay.S
 sram-overlay
 sram-overlay.bin
-
