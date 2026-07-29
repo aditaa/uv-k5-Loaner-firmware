@@ -76,3 +76,21 @@ def test_full_pipeline_requires_two_identical_builds():
 		'cmp "${FIRST_BUILD}/loaner-firmware.packed.bin" loaner-firmware.packed.bin'
 		in repro_script
 	)
+
+
+def test_ci_suffixes_and_chirp_source_do_not_drift():
+	main_workflow = (ROOT / ".github" / "workflows" / "main.yaml").read_text(encoding="utf-8")
+	codeql_workflow = (ROOT / ".github" / "workflows" / "codeql.yaml").read_text(
+		encoding="utf-8"
+	)
+
+	assert "aditaa/chirp" not in main_workflow
+	assert "loaner-firmware-whitelist" not in main_workflow
+	assert "COMPAT_SUFFIX" not in main_workflow
+	assert "REQUESTED_SUFFIX" not in main_workflow
+	assert 'SUFFIX="CI${' not in main_workflow
+	assert main_workflow.count("submodules: recursive") >= 2
+	assert 'TARGET=loaner-firmware VERSION_SUFFIX="${VERSION_SUFFIX}"' in main_workflow
+	assert "VERSION_SUFFIX: LNR" not in codeql_workflow
+	assert "< VERSION_SUFFIX" in main_workflow
+	assert "< VERSION_SUFFIX" in codeql_workflow

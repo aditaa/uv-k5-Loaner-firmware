@@ -8,10 +8,6 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      version_suffix:
-        description: 'Release VERSION_SUFFIX (e.g. LNR24B1). Required when manually triggering.'
-        required: false
 
 jobs:
   style:
@@ -32,7 +28,7 @@ jobs:
           sudo apt-get install -y shellcheck=0.8.0-2
 
       - name: Ruff (pyflakes)
-        run: python -m ruff check fw-pack.py ci/release_artifacts.py tests
+        run: python -m ruff check fw-pack.py ci tests
 
       - name: Shellcheck
         run: shellcheck compile-with-docker.sh ci/run.sh ci/check-clang-format.sh
@@ -75,32 +71,56 @@ jobs:
   chirp-compat:
     runs-on: ubuntu-22.04
     needs: [style, clang-format, cppcheck]
-    env:
-      CHIRP_REPO: https://github.com/aditaa/chirp.git
-      CHIRP_REF: loaner-firmware-whitelist
-      COMPAT_SUFFIX: LNR2414
     steps:
       - name: Checkout repo
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          submodules: recursive
 
-      - name: Clone CHIRP sources
-        run: git clone --depth 1 --branch "$CHIRP_REF" "$CHIRP_REPO" chirp-src
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.10.18'
 
-      - name: Verify CHIRP compatibility
-        run: python3 ci/check-chirp-compat.py chirp-src
+      - name: Load validated compatibility inputs
+        run: |
+          SUFFIX="$(tr -d '\r\n' < VERSION_SUFFIX)"
+          python3 ci/release_artifacts.py validate-suffix "${SUFFIX}"
+          python3 ci/chirp_pin.py validate
+          {
+            echo "VERSION_SUFFIX=${SUFFIX}"
+            echo "CHIRP_REPOSITORY=$(python3 ci/chirp_pin.py get repository)"
+            echo "CHIRP_COMMIT=$(python3 ci/chirp_pin.py get commit)"
+          } >> "${GITHUB_ENV}"
+
+      - name: Fetch pinned upstream CHIRP commit
+        run: |
+          git init chirp-src
+          git -C chirp-src remote add origin "${CHIRP_REPOSITORY}"
+          git -C chirp-src fetch --depth 1 origin "${CHIRP_COMMIT}"
+          git -C chirp-src checkout --detach FETCH_HEAD
+          test "$(git -C chirp-src rev-parse HEAD)" = "${CHIRP_COMMIT}"
 
       - name: Install CHIRP test dependencies
-        run: |
-          cd chirp-src
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r test-requirements.txt pytest pytest-xdist
+        run: python3 -m pip install --disable-pip-version-check -r chirp-src/test-requirements.txt
+
+      - name: Install verified ARM GCC toolchain
+        run: bash ci/install-arm-toolchain.sh "${RUNNER_TEMP}"
+
+      - name: Build firmware with the release suffix
+        run: make -j"$(nproc)" TARGET=loaner-firmware VERSION_SUFFIX="${VERSION_SUFFIX}"
+
+      - name: Verify built firmware with CHIRP
+        run: >-
+          python3 ci/check-chirp-compat.py chirp-src loaner-firmware.bin
+          --suffix-file VERSION_SUFFIX
 
       - name: Run CHIRP UV-K5 driver tests
         working-directory: chirp-src
         env:
-          PYTHONPATH: ${PWD}/chirp-src
+          PYTHONPATH: ${{ github.workspace }}/chirp-src
           CHIRP_DEBUG: "y"
-        run: pytest --disable-warnings -k "uvk5" tests/test_drivers.py
+        run: python3 -m pytest --disable-warnings -k "uvk5" tests/test_drivers.py
 
   python-tests:
     runs-on: ubuntu-22.04
@@ -134,20 +154,9 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Derive version suffix
-        env:
-          REQUESTED_SUFFIX: ${{ github.event.inputs.version_suffix }}
+      - name: Load validated firmware suffix
         run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            if [[ -z "${REQUESTED_SUFFIX}" ]]; then
-              echo "VERSION_SUFFIX input is required when running manually" >&2
-              exit 1
-            fi
-            SUFFIX="${REQUESTED_SUFFIX}"
-          else
-            SUFFIX="CI${GITHUB_SHA::5}"
-            SUFFIX="${SUFFIX^^}"
-          fi
+          SUFFIX="$(tr -d '\r\n' < VERSION_SUFFIX)"
           python3 ci/release_artifacts.py validate-suffix "${SUFFIX}"
           echo "VERSION_SUFFIX=${SUFFIX}" >> "$GITHUB_ENV"
 
@@ -161,5 +170,5 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: github.event_name == 'workflow_dispatch'
         with:
-          name: loaner-firmware-${{ github.event.inputs.version_suffix }}
+          name: loaner-firmware-${{ env.VERSION_SUFFIX }}
           path: compiled-firmware/loaner-firmware-*

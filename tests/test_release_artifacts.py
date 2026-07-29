@@ -72,6 +72,9 @@ def test_release_bundle_records_and_verifies_integrity(tmp_path):
 	assert manifest["build_environment"]["package_snapshot"]
 	assert manifest["build_environment"]["source_date_epoch"]
 	assert manifest["firmware_ids"]["uart_handshake"] == "1.02.LNR24A5"
+	assert manifest["compatibility"]["chirp"] == json.loads(
+		Path("ci/chirp.lock.json").read_text(encoding="utf-8")
+	)
 	assert manifest["files"]["loaner-firmware-LNR24A5.bin"]["size"] == 0x2200
 	assert (output_dir / "loaner-firmware-LNR24A5.sha256").is_file()
 

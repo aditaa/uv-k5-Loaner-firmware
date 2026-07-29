@@ -28,6 +28,25 @@ the archive. Update the URL, checksum file, and documented versions together.
 GitHub Actions uses Python `3.10.18` and `3.12.11`. Direct and transitive test,
 lint, and formatting packages are pinned in `ci/requirements-ci.txt`.
 
+## CHIRP
+
+Compatibility tests use the upstream `kk7ds/chirp` repository at the exact
+commit recorded in `ci/chirp.lock.json`. CI builds the firmware with the root
+`VERSION_SUFFIX`, extracts the UART programming identifier from the resulting
+binary, and then exercises the pinned UV-K5 driver and EEPROM mutations.
+
+The programming identifier remains `1.02.<VERSION_SUFFIX>` while the EEPROM
+layout is compatible with the upstream UV-K5 driver. The human-facing display
+banner remains `OEFW-<VERSION_SUFFIX>`. If the EEPROM layout diverges, introduce
+a compatibility-major firmware identifier and a dedicated CHIRP subclass,
+referencing https://github.com/kk7ds/chirp/pull/1414 for the upstream design
+history.
+
+The `Update CHIRP pin` workflow checks upstream `master` every Monday and can
+also be run manually. When the tracked commit changes, it updates only the lock
+file and opens a dependency PR so the normal compatibility tests and review are
+required before the new commit becomes the release pin.
+
 ## GitHub Actions
 
 Workflow `uses:` entries are pinned to full commit SHAs with the reviewed

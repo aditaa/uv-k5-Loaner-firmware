@@ -1,0 +1,99 @@
+name: Update CHIRP pin
+
+on:
+  schedule:
+    - cron: '30 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12.11'
+
+      - name: Resolve tracked CHIRP commit
+        id: chirp
+        run: |
+          python3 ci/chirp_pin.py validate
+          REPOSITORY="$(python3 ci/chirp_pin.py get repository)"
+          TRACK_REF="$(python3 ci/chirp_pin.py get track_ref)"
+          CURRENT="$(python3 ci/chirp_pin.py get commit)"
+          LATEST="$(git ls-remote "${REPOSITORY}" "${TRACK_REF}" | awk 'NR == 1 {print $1}')"
+          if [[ ! "${LATEST}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Unable to resolve a full CHIRP commit for ${TRACK_REF}" >&2
+            exit 1
+          fi
+          {
+            echo "current=${CURRENT}"
+            echo "latest=${LATEST}"
+            echo "track_ref=${TRACK_REF}"
+            if [[ "${CURRENT}" == "${LATEST}" ]]; then
+              echo "update=false"
+            else
+              echo "update=true"
+            fi
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Update lock file
+        if: steps.chirp.outputs.update == 'true'
+        run: python3 ci/chirp_pin.py update "${{ steps.chirp.outputs.latest }}"
+
+      - name: Commit and push dependency branch
+        if: steps.chirp.outputs.update == 'true'
+        id: branch
+        env:
+          LATEST: ${{ steps.chirp.outputs.latest }}
+        run: |
+          BRANCH="automation/chirp-pin-${LATEST:0:12}"
+          echo "name=${BRANCH}" >> "${GITHUB_OUTPUT}"
+          if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "${BRANCH}"
+          git add ci/chirp.lock.json
+          git commit -m "Update CHIRP pin to ${LATEST:0:12}"
+          git push --set-upstream origin "${BRANCH}"
+          echo "exists=false" >> "${GITHUB_OUTPUT}"
+
+      - name: Open tracked dependency PR
+        if: >-
+          steps.chirp.outputs.update == 'true' &&
+          steps.branch.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          CURRENT: ${{ steps.chirp.outputs.current }}
+          LATEST: ${{ steps.chirp.outputs.latest }}
+          TRACK_REF: ${{ steps.chirp.outputs.track_ref }}
+        run: |
+          BODY="$(printf "%s\n\n- Previous commit: \`%s\`\n- Candidate commit: \`%s\`\n- Tracked ref: \`%s\`\n\nCI validates the actual built firmware identifier and EEPROM mutations against this exact commit." \
+            'Automated CHIRP compatibility dependency update.' \
+            "${CURRENT}" "${LATEST}" "${TRACK_REF}")"
+          gh pr create \
+            --base main \
+            --head "${BRANCH}" \
+            --title "Update CHIRP compatibility pin to ${LATEST:0:12}" \
+            --body "${BODY}"
+
+      - name: Dispatch compatibility CI for the dependency PR
+        if: >-
+          steps.chirp.outputs.update == 'true' &&
+          steps.branch.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+        run: gh workflow run main.yaml --ref "${BRANCH}"

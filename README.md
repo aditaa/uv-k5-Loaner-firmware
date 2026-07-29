@@ -29,6 +29,7 @@ The project also gives COML/COMT staff a predictable path from the ICS-205 form 
 - Unlocked transmit policy: regional lock presets do not restrict programmed memories. The firmware permits transmit throughout its defined 50–76 MHz and 108–600 MHz tuning bands; the person programming and operating each radio is responsible for choosing authorized frequencies, modes, power levels, and equipment.
 
 ## Programming Channel Plans With CHIRP
+
 This build assumes the channel plan lives on your ICS-205. To move that plan into a radio:
 
 1. Prepare the ICS-205 so each channel has a concise label (CHIRP shows up to seven characters by default).
@@ -38,21 +39,21 @@ This build assumes the channel plan lives on your ICS-205. To move that plan int
 5. Upload the plan with `Radio -> Upload To Radio`. After the radio reboots, rotate the channel knob and verify that the display shows the ICS-205 names.
 6. Repeat for each handset; the standard workflow keeps the handset in channel mode, so operators only see the memories you defined.
 
-### Detailed CHIRP workflow (UV-K5 + Egzumer/OSFW build)
+### Detailed upstream CHIRP workflow
 
-The loaner firmware reports the stock handshake string (`1.02.LNR2415`), so you can stay on the upstream CHIRP tree. Use the existing **Quansheng → UV-K5 (Plus / unsupported / OSFW)** driver entry that Egzumer added for the Plus/OSFW firmware:
+The radio reports `1.02.<VERSION_SUFFIX>` to programming software, which identifies its EEPROM layout as compatible with the upstream UV-K5 driver. The separate `OEFW-<VERSION_SUFFIX>` display banner gives field users the recognizable loaner label without changing CHIRP's compatibility contract.
 
-1. Update to the latest CHIRP daily build (or the Egzumer fork) so that “UV-K5 (Plus / unsupported / OSFW)” shows up under `Radio → Download From Radio`.
-2. Plug in the CH340 cable, switch the radio **on** (normal operation), and note the serial port name (`/dev/ttyUSB0`, `COM3`, etc.).
-3. In CHIRP choose `Radio → Download From Radio`, set **Vendor** to `Quansheng` and **Model** to `UV-K5 (Plus / unsupported / OSFW)`, then pick the serial port. Leave the radio unlocked; the loaner build keeps the keypad constrained but still answers the driver handshake.
-4. Once the download succeeds, edit memories as usual. Because the firmware only exposes 200 MR channels, keep your plan within that range.
-5. Upload with `Radio → Upload To Radio` using the same model selection. CHIRP will send the `1.02.LNR2415` identifier, which the radio accepts; the on-radio splash still says `OEFW-LNR2415` so field users see the loaner tag.
+1. Install a current CHIRP daily build from the upstream CHIRP project.
+2. Plug in the CH340 cable, switch the radio **on** in normal operating mode, and note the serial port name (`/dev/ttyUSB0`, `COM3`, etc.).
+3. In CHIRP choose `Radio -> Download From Radio`, set **Vendor** to `Quansheng` and **Model** to `UV-K5`, then select the serial port.
+4. Once the download succeeds, edit memories as usual. Keep the channel plan within memories 1 through 200.
+5. Upload with `Radio -> Upload To Radio` using the same model selection. After the radio restarts, verify the channel names against the ICS-205.
 
-If CHIRP warns that it cannot recognise the firmware, double-check that you selected the “Plus / unsupported / OSFW” entry—selecting the vanilla UV-K5 or K5 Plus targets will fail the version check.
+If CHIRP reports an unsupported firmware version, first confirm that the regular **Quansheng -> UV-K5** driver is selected and that the radio is running an official release artifact. Each release manifest records the exact upstream CHIRP commit tested by CI.
+
+The current firmware intentionally keeps the OEM-compatible EEPROM layout. If that layout ever changes, the firmware identifier must gain a compatibility-major version and CHIRP must gain a dedicated subclass; the design history is recorded in [kk7ds/chirp#1414](https://github.com/kk7ds/chirp/pull/1414).
 
 Tip: Keep a CHIRP image with the baseline loaner plan in source control so teams can diff changes before distributing updates. After each upload, rotate the knob and confirm the ICS-205 names match the paperwork.
-
-Tip: Keep a CHIRP image with the baseline loaner plan in source control so teams can diff changes before distributing updates.
 
 ## Flashing
 ### Quansheng PC Loader (recommended)
