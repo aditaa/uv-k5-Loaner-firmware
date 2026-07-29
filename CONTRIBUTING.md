@@ -10,13 +10,13 @@ Python dependencies, and formatting tools. From Git Bash, WSL, Linux, or
 macOS:
 
 ```sh
-VERSION_SUFFIX=LNR2415 ./compile-with-docker.sh
+VERSION_SUFFIX=LNR24C5 ./compile-with-docker.sh
 ```
 
 From Windows Command Prompt:
 
 ```bat
-set VERSION_SUFFIX=LNR2415
+set VERSION_SUFFIX=LNR24C5
 compile-with-docker.bat
 ```
 

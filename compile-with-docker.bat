@@ -3,7 +3,7 @@ setlocal
 
 if "%VERSION_SUFFIX%"=="" (
     echo VERSION_SUFFIX must be set to exactly 7 uppercase letters or digits.
-    echo Example: set VERSION_SUFFIX=LNR2415
+    echo Example: set VERSION_SUFFIX=LNR24C5
     exit /b 1
 )
 

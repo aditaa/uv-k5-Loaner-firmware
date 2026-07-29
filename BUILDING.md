@@ -15,26 +15,26 @@ in [`docs/feature-inventory.md`](docs/feature-inventory.md).
 Run the complete validation and build pipeline with an exact seven-character uppercase alphanumeric suffix:
 
 ```sh
-VERSION_SUFFIX=LNR2415 ./compile-with-docker.sh
+VERSION_SUFFIX=LNR24C5 ./compile-with-docker.sh
 ```
 
 From Windows Command Prompt with Git for Windows installed, run the same
 pipeline through the batch wrapper:
 
 ```bat
-set VERSION_SUFFIX=LNR2415
+set VERSION_SUFFIX=LNR24C5
 compile-with-docker.bat
 ```
 
-PowerShell users can set `$env:VERSION_SUFFIX = "LNR2415"` and then run
+PowerShell users can set `$env:VERSION_SUFFIX = "LNR24C5"` and then run
 `.\compile-with-docker.bat`.
 
 The wrapper runs the formatting check, cppcheck, pytest, and two clean ARM builds. The two raw images and two packed images must be byte-identical before it writes a verified bundle to `compiled-firmware/`:
 
-- `loaner-firmware-LNR2415.bin`
-- `loaner-firmware-LNR2415.packed.bin`
-- `loaner-firmware-LNR2415.manifest.json`
-- `loaner-firmware-LNR2415.sha256`
+- `loaner-firmware-LNR24C5.bin`
+- `loaner-firmware-LNR24C5.packed.bin`
+- `loaner-firmware-LNR24C5.manifest.json`
+- `loaner-firmware-LNR24C5.sha256`
 
 The manifest records file sizes and hashes, the source commit, firmware identifiers, and build-tool versions. The checksum file covers both images and the manifest. The Docker base, dated Arch package repository, Python packages, Arm archive checksum, and GitHub Actions are pinned; see `ci/dependencies.md` for the reviewed values and update procedure.
 
@@ -42,7 +42,7 @@ The manifest records file sizes and hashes, the source commit, firmware identifi
 
 ```sh
 make clean
-make TARGET=loaner-firmware VERSION_SUFFIX=LNR2415
+make TARGET=loaner-firmware VERSION_SUFFIX=LNR24C5
 ```
 
 This creates `loaner-firmware.bin` and the required `loaner-firmware.packed.bin`. Packing is fail-closed: an invalid suffix, undersized input, packer failure, or missing packed image fails the build. When `VERSION_SUFFIX` is omitted, Make reads the root `VERSION_SUFFIX` file.
@@ -50,8 +50,8 @@ This creates `loaner-firmware.bin` and the required `loaner-firmware.packed.bin`
 ## Packing and Verifying an Image
 
 ```sh
-python3 fw-pack.py pack loaner-firmware.bin LNR2415 loaner-firmware.packed.bin
-python3 fw-pack.py verify loaner-firmware.packed.bin LNR2415
+python3 fw-pack.py pack loaner-firmware.bin LNR24C5 loaner-firmware.packed.bin
+python3 fw-pack.py verify loaner-firmware.packed.bin LNR24C5
 ```
 
 The verifier checks the XMODEM CRC, `*OEFW-` metadata prefix, exact embedded suffix, and metadata padding. The raw firmware must be at least 8192 bytes so metadata is inserted at the required offset.
@@ -65,7 +65,7 @@ python -m pip install -r ci/requirements-ci.txt
 ci/check-clang-format.sh
 CI_MODE=cppcheck ci/run.sh
 pytest -q
-VERSION_SUFFIX=LNR2415 ci/run.sh
+VERSION_SUFFIX=LNR24C5 ci/run.sh
 ```
 
 GitHub Actions runs tests under Python 3.10.18 and 3.12.11, checks CHIRP compatibility, runs CodeQL, and performs the Docker firmware build. Docker builds export the changed-line formatting diff on the host and mount it read-only, so Git history never enters the image context. Keep the firmware below `MAX_FIRMWARE_SIZE` (122880 bytes by default).

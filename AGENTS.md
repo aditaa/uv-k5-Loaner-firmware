@@ -10,7 +10,7 @@
 - `make` (or `win_make.bat`) builds both the raw and required packed firmware; a packing or metadata failure fails the build.
 - `./compile-with-docker.sh` uses the pinned container and checksum-verified GCC 10.3.1 toolchain, proves two clean builds are byte-identical, and writes artifacts to `compiled-firmware/`.
 - `make clean` clears objects before benchmarking size; `make flash`/`make debug` expect OpenOCD with a J-Link config.
-- `python3 fw-pack.py pack loaner-firmware.bin LNR2415 loaner-firmware.packed.bin` injects metadata; use the `verify` subcommand before publishing an image.
+- `python3 fw-pack.py pack loaner-firmware.bin LNR24C5 loaner-firmware.packed.bin` injects metadata; use the `verify` subcommand before publishing an image.
 
 ## Coding Style & Naming Conventions
 - Indent with tabs; macros remain uppercase snake-case (`ENABLE_*`, `SYSCON_*`).
@@ -37,7 +37,7 @@
 
 ## Versioning Strategy
 - Use `vYY.MM[.PATCH]` for git tags and releases. Automation maps the tag to the seven-character suffix `LNRYYMP`, using one base-36 digit for month and patch (for example `v24.10.5` maps to `LNR24A5`; an omitted patch maps to `0`). Patches above 35 are rejected.
-- The packed firmware metadata must keep the `*OEFW-` prefix (Quansheng’s bootloader refuses anything else). For CHIRP compatibility we report the stock-style `1.02.<SUFFIX>` string over the UART handshake instead, while the welcome banner continues to show `OEFW-LNR2415`. Update the root `VERSION_SUFFIX` file whenever you change the suffix so CI/release builds stay consistent.
+- The packed firmware metadata must keep the `*OEFW-` prefix (Quansheng’s bootloader refuses anything else). For CHIRP compatibility we report the stock-style `1.02.<SUFFIX>` string over the UART handshake instead, while the welcome banner continues to show `OEFW-LNR24C5`. Update the root `VERSION_SUFFIX` file whenever you change the suffix so CI/release builds stay consistent.
 - Update the root `VERSION_SUFFIX` to the mapped value before tagging. Releases include suffix-bearing raw/packed binaries, a JSON build manifest, and SHA-256 checksums.
 
 ## Firmware Configuration Tips
