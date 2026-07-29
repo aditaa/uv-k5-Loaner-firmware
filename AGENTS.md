@@ -7,10 +7,10 @@
 - Feature toggles and build-time limits are managed via the `ENABLE_*` blocks at the top of `Makefile`.
 
 ## Build, Test, and Development Commands
-- `make` (or `win_make.bat`) builds `loaner-firmware.bin`; when Python + `crcmod` is available it also emits `loaner-firmware.packed.bin`.
+- `make` (or `win_make.bat`) builds both the raw and required packed firmware; a packing or metadata failure fails the build.
 - `./compile-with-docker.sh` supplies a reproducible GCC 10.3.1 toolchain and writes artifacts to `compiled-firmware/`.
 - `make clean` clears objects before benchmarking size; `make flash`/`make debug` expect OpenOCD with a J-Link config.
-- `python3 fw-pack.py loaner-firmware.bin AUTHOR VERSION loaner-firmware.packed.bin` injects metadata so web flashers accept the build.
+- `python3 fw-pack.py pack loaner-firmware.bin LNR24A5 loaner-firmware.packed.bin` injects metadata; use the `verify` subcommand before publishing an image.
 
 ## Coding Style & Naming Conventions
 - Indent with tabs; macros remain uppercase snake-case (`ENABLE_*`, `SYSCON_*`).
@@ -32,13 +32,13 @@
 ## Branching & Release Workflow
 - Create a feature branch for every change (`git checkout -b feature-name`) and never push commits straight to `main`.
 - Open a pull request targeting `main` once the branch is ready; include build/test notes and hardware validation results.
-- When a milestone lands, tag the merge commit (for example `git tag -a v0.3`) and cut a GitHub release that attaches the packed firmware built from that tag.
+- When a milestone lands, update `VERSION_SUFFIX`, merge it, and tag that exact commit using `vYY.MM[.PATCH]`; the release workflow rejects mismatched tags and existing releases.
 - Keep release notes concise: highlight the loaner-facing changes and link the corresponding ICS-205 or CHIRP updates if applicable.
 
 ## Versioning Strategy
-- Follow the calendar-semver pattern used by other UV-K5 forks (e.g. Quansheng's `v2.1.27` and Open Edition's `OEFW-2023.09`). Adopt `vYY.MM[.PATCH]` for git tags and releases (for example `v24.03` or `v24.03.1` for hotfixes).
+- Use `vYY.MM[.PATCH]` for git tags and releases. Automation maps the tag to the seven-character suffix `LNRYYMP`, using one base-36 digit for month and patch (for example `v24.10.5` maps to `LNR24A5`; an omitted patch maps to `0`). Patches above 35 are rejected.
 - The packed firmware metadata must keep the `*OEFW-` prefix (Quansheng’s bootloader refuses anything else). For CHIRP compatibility we report the stock-style `1.02.<SUFFIX>` string over the UART handshake instead, while the welcome banner continues to show `OEFW-LNR2415`. Update the root `VERSION_SUFFIX` file whenever you change the suffix so CI/release builds stay consistent.
-- Update the tag, the packed image suffix, and the GitHub release name together so end users and CHIRP all report the same version string.
+- Update the root `VERSION_SUFFIX` to the mapped value before tagging. Releases include suffix-bearing raw/packed binaries, a JSON build manifest, and SHA-256 checksums.
 
 ## Firmware Configuration Tips
 - Adjust `ENABLE_*` groups in `Makefile` to keep only the features you can fit, and re-run `make clean` before remeasuring size.

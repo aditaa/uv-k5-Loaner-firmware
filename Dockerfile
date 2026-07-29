@@ -8,7 +8,6 @@ RUN pacman -Syyu --noconfirm \
     base-devel \
     git \
     python-pip \
-    python-crcmod \
     python-pytest \
     cppcheck \
     ca-certificates \

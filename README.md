@@ -9,7 +9,7 @@ The project also gives COML/COMT staff a predictable path from the ICS-205 form 
 > Flashing third-party firmware is always at your own risk. Test on non-critical hardware first and confirm RF behaviour before handing units out.
 
 ## Quickstart
-1. Download the latest packed release (`loaner-firmware.packed.bin`) from the Releases page.
+1. Download the latest suffix-bearing packed release (for example `loaner-firmware-LNR24A5.packed.bin`) from the Releases page and, when practical, compare it with the published SHA-256 file.
 2. With the radio powered off, hold the **PTT** and the **top side key** while turning it on. The display should stay blank, indicating the bootloader is active.
 3. Connect the USB cable, open Quansheng's PC programming tool, select *Firmware Update*, point it at the packed image, and start the transfer.
 4. After the loader reports success, power the radio off and back on to confirm the welcome screen shows the release tag from the packed image.

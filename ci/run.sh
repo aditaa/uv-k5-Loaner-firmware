@@ -52,7 +52,10 @@ fi
 : "${VERSION_SUFFIX:?VERSION_SUFFIX is required (set a 7-character value such as VERSION_SUFFIX=LNR2415 before running this script)}"
 
 mkdir -p "${ARTIFACT_DIR}"
-rm -f "${ARTIFACT_DIR}"/loaner-firmware*.bin
+rm -f \
+	"${ARTIFACT_DIR}"/loaner-firmware-* \
+	"${ARTIFACT_DIR}/loaner-firmware.bin" \
+	"${ARTIFACT_DIR}/loaner-firmware.packed.bin"
 
 echo "Checking C formatting..."
 "${ROOT}/ci/check-clang-format.sh"
@@ -64,7 +67,7 @@ pytest -q
 
 echo "Building firmware..."
 make clean
-make TARGET=loaner-firmware
+make TARGET=loaner-firmware VERSION_SUFFIX="${VERSION_SUFFIX}"
 
 BIN_SIZE=$(stat --format="%s" loaner-firmware.bin)
 MAX_SIZE=${MAX_FIRMWARE_SIZE:-122880}
@@ -75,4 +78,23 @@ fi
 
 echo "Firmware size: ${BIN_SIZE} bytes (limit ${MAX_SIZE})"
 
-cp loaner-firmware*.bin "${ARTIFACT_DIR}/"
+SOURCE_COMMIT="${SOURCE_COMMIT:-$(git rev-parse HEAD)}"
+BUNDLE_ARGS=(
+	--suffix "${VERSION_SUFFIX}"
+	--source-commit "${SOURCE_COMMIT}"
+	--raw loaner-firmware.bin
+	--packed loaner-firmware.packed.bin
+	--output-dir "${ARTIFACT_DIR}"
+)
+VERIFY_ARGS=(
+	--manifest "${ARTIFACT_DIR}/loaner-firmware-${VERSION_SUFFIX}.manifest.json"
+	--expected-suffix "${VERSION_SUFFIX}"
+)
+if [[ -n "${RELEASE_TAG:-}" ]]; then
+	BUNDLE_ARGS+=(--tag "${RELEASE_TAG}")
+	VERIFY_ARGS+=(--expected-tag "${RELEASE_TAG}")
+fi
+
+echo "Creating verified artifact bundle..."
+python3 ci/release_artifacts.py bundle "${BUNDLE_ARGS[@]}"
+python3 ci/release_artifacts.py verify-bundle "${VERIFY_ARGS[@]}"

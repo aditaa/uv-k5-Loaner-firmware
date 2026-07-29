@@ -114,19 +114,20 @@ CC = arm-none-eabi-gcc
 LD = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 SIZE = arm-none-eabi-size
+PYTHON ?= python3
 
 GIT_HASH := $(shell git rev-parse --short HEAD)
 
-VERSION_SUFFIX ?= $(shell git describe --tags --match 'LNR*' --abbrev=0 2>/dev/null)
+VERSION_SUFFIX ?= $(strip $(shell cat VERSION_SUFFIX 2>/dev/null))
 
 ifeq ($(MAKECMDGOALS),)
   ifeq ($(strip $(VERSION_SUFFIX)),)
-    $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or create an LNR* tag.)
+    $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or update the root VERSION_SUFFIX file.)
   endif
 else
   ifneq ($(filter-out clean,$(MAKECMDGOALS)),)
     ifeq ($(strip $(VERSION_SUFFIX)),)
-      $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or create an LNR* tag.)
+      $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or update the root VERSION_SUFFIX file.)
     endif
 endif
 endif
@@ -145,7 +146,7 @@ ifneq ($(VERSION_SUFFIX_LEN),7)
 endif
 
 ifneq ($(VERSION_SUFFIX),$(VERSION_SUFFIX_RAW))
-  $(warning VERSION_SUFFIX sanitized from "$(VERSION_SUFFIX_RAW)" to "$(VERSION_SUFFIX)")
+  $(error VERSION_SUFFIX "$(VERSION_SUFFIX_RAW)" must contain only uppercase ASCII letters and digits)
 endif
 
 VERSION_SUFFIX_ESCAPED := $(subst ",\",$(VERSION_SUFFIX))
@@ -201,8 +202,8 @@ DEPS = $(OBJS:.o=.d)
 
 all: $(TARGET)
 	$(OBJCOPY) -O binary $< $<.bin
-	-python fw-pack.py $<.bin $(VERSION_SUFFIX) $<.packed.bin
-	-python3 fw-pack.py $<.bin $(VERSION_SUFFIX) $<.packed.bin
+	$(PYTHON) fw-pack.py pack $<.bin $(VERSION_SUFFIX) $<.packed.bin
+	test -s $<.packed.bin
 	$(SIZE) $<
 
 debug:

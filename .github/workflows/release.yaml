@@ -3,7 +3,8 @@ name: Release
 on:
   push:
     tags:
-      - '*'
+      - 'v[0-9][0-9].[0-9][0-9]'
+      - 'v[0-9][0-9].[0-9][0-9].[0-9]*'
 
 permissions:
   contents: write
@@ -19,35 +20,56 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Derive version suffix
+      - name: Validate release tag and firmware suffix
+        id: release
         run: |
-          if [[ ! -f VERSION_SUFFIX ]]; then
-            echo "VERSION_SUFFIX file is missing" >&2
-            exit 1
-          fi
-          SUFFIX="$(tr -d '\r\n' < VERSION_SUFFIX)"
-          if [[ -z "${SUFFIX}" ]]; then
-            echo "VERSION_SUFFIX file is empty" >&2
-            exit 1
-          fi
-          echo "Using VERSION_SUFFIX=${SUFFIX}"
-          echo "VERSION_SUFFIX=${SUFFIX}" >> "$GITHUB_ENV"
+          python3 ci/release_artifacts.py validate-tag \
+            --tag "${GITHUB_REF_NAME}" \
+            --suffix-file VERSION_SUFFIX \
+            --github-output "${GITHUB_OUTPUT}"
 
-      - name: Build firmware (Docker)
+      - name: Refuse to overwrite an existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "Release ${GITHUB_REF_NAME} already exists; refusing to overwrite it" >&2
+            exit 1
+          fi
+
+      - name: Build firmware and release bundle
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          SOURCE_COMMIT: ${{ github.sha }}
+          VERSION_SUFFIX: ${{ steps.release.outputs.version_suffix }}
         run: ./compile-with-docker.sh
+
+      - name: Verify release bundle
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          VERSION_SUFFIX: ${{ steps.release.outputs.version_suffix }}
+        run: |
+          python3 ci/release_artifacts.py verify-bundle \
+            --manifest "compiled-firmware/loaner-firmware-${VERSION_SUFFIX}.manifest.json" \
+            --expected-suffix "${VERSION_SUFFIX}" \
+            --expected-tag "${RELEASE_TAG}"
 
       - name: List artifacts
         run: ls -l compiled-firmware
 
-      - name: Upload artifacts
+      - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: loaner-firmware
-          path: compiled-firmware/loaner-firmware*.bin
+          name: ${{ steps.release.outputs.artifact_stem }}
+          path: compiled-firmware/loaner-firmware-*
 
-      - name: Create release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "compiled-firmware/loaner-firmware*.bin"
-          allowUpdates: true
-          prerelease: false
+      - name: Create immutable GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "${RELEASE_TAG}" \
+            compiled-firmware/loaner-firmware-* \
+            --verify-tag \
+            --title "Loaner firmware ${RELEASE_TAG}" \
+            --generate-notes

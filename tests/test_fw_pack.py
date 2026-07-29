@@ -1,75 +1,108 @@
-import ast
+import importlib.util
 import subprocess
 import sys
-from binascii import crc_hqx
-from itertools import cycle
 from pathlib import Path
 
-
-def _load_obfuscation():
-    tree = ast.parse(Path("fw-pack.py").read_text())
-    for node in tree.body:
-        if isinstance(node, ast.Assign):
-            target = node.targets[0]
-            if isinstance(target, ast.Name) and target.id == "OBFUSCATION":
-                values = []
-                for elt in node.value.elts:
-                    if isinstance(elt, ast.Constant):
-                        values.append(elt.value)
-                    else:
-                        raise ValueError("Unexpected AST element in OBFUSCATION table")
-                return values
-    raise RuntimeError("OBFUSCATION table not found")
+import pytest
 
 
-OBFUSCATION = _load_obfuscation()
+def _load_packer():
+	spec = importlib.util.spec_from_file_location("firmware_packer", Path("fw-pack.py"))
+	assert spec is not None
+	assert spec.loader is not None
+	module = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	return module
 
 
-def deobfuscate(payload: bytes) -> bytes:
-    return bytes(a ^ b for a, b in zip(payload, cycle(OBFUSCATION)))
+PACKER = _load_packer()
 
 
-def run_fw_pack(input_path, version, output_path):
-    subprocess.run(
-        [sys.executable, "fw-pack.py", str(input_path), version, str(output_path)],
-        check=True,
-    )
+def run_fw_pack(*args, check=True):
+	return subprocess.run(
+		[sys.executable, "fw-pack.py", *map(str, args)],
+		check=check,
+		capture_output=True,
+		text=True,
+	)
 
 
-def test_fw_pack_injects_version(tmp_path):
-    plain = (b"\x01\x02\x03\x04" * 4096)  # 16 KiB test payload
-    input_bin = tmp_path / "input.bin"
-    packed_bin = tmp_path / "output.bin"
-    input_bin.write_bytes(plain)
+def test_fw_pack_injects_version_and_verifies_image(tmp_path):
+	plain = b"\x01\x02\x03\x04" * 4096
+	input_bin = tmp_path / "input.bin"
+	packed_bin = tmp_path / "output.bin"
+	input_bin.write_bytes(plain)
 
-    run_fw_pack(input_bin, "LOANER01", packed_bin)
+	run_fw_pack("pack", input_bin, "LOANR01", packed_bin)
+	result = run_fw_pack("verify", packed_bin, "LOANR01")
 
-    data = packed_bin.read_bytes()
-    assert len(data) == len(plain) + 16 + 2  # Version block inserted + CRC
-
-    deobfuscated = deobfuscate(data[:-2])
-    version_block = deobfuscated[0x2000:0x2010]
-    assert version_block.startswith(b"*OEFW-")
-    assert version_block[6:6 + len("LOANER01")] == b"LOANER01"
-    assert version_block.endswith(b"\x00" * (16 - len("*OEFW-") - len("LOANER01")))
-
-    # Verify CRC matches (xmodem polynomial)
-    payload, crc_bytes = data[:-2], data[-2:]
-    crc = crc_hqx(payload, 0x0000)
-    assert crc_bytes == bytes([crc & 0xFF, (crc >> 8) & 0xFF])
+	data = packed_bin.read_bytes()
+	assert len(data) == len(plain) + PACKER.METADATA_SIZE + 2
+	assert PACKER.inspect_firmware(data) == "LOANR01"
+	assert result.stdout.strip() == "LOANR01"
 
 
-def test_fw_pack_rejects_long_version(tmp_path):
-    input_bin = tmp_path / "input.bin"
-    input_bin.write_bytes(b"\x00" * 0x2100)
-    packed_bin = tmp_path / "output.bin"
+@pytest.mark.parametrize("suffix", ["short", "TOO-LNG", "lower01", "TOOLONG8"])
+def test_fw_pack_rejects_invalid_suffixes(tmp_path, suffix):
+	input_bin = tmp_path / "input.bin"
+	packed_bin = tmp_path / "output.bin"
+	input_bin.write_bytes(b"\x00" * 0x2100)
 
-    result = subprocess.run(
-        [sys.executable, "fw-pack.py", str(input_bin), "THIS_IS_TOO_LONG", str(packed_bin)],
-        capture_output=True,
-        text=True,
-    )
+	result = run_fw_pack("pack", input_bin, suffix, packed_bin, check=False)
 
-    assert result.returncode != 0
-    assert "Version suffix is too big" in result.stdout
-    assert not packed_bin.exists()
+	assert result.returncode != 0
+	assert "exactly 7 uppercase alphanumeric" in result.stderr
+	assert not packed_bin.exists()
+
+
+def test_fw_pack_rejects_small_input(tmp_path):
+	input_bin = tmp_path / "input.bin"
+	packed_bin = tmp_path / "output.bin"
+	input_bin.write_bytes(b"\x00" * (PACKER.METADATA_OFFSET - 1))
+
+	result = run_fw_pack("pack", input_bin, "LOANR01", packed_bin, check=False)
+
+	assert result.returncode != 0
+	assert "input firmware is too small" in result.stderr
+	assert not packed_bin.exists()
+
+
+def test_fw_pack_removes_stale_output_after_failure(tmp_path):
+	input_bin = tmp_path / "input.bin"
+	packed_bin = tmp_path / "output.bin"
+	input_bin.write_bytes(b"too small")
+	packed_bin.write_bytes(b"stale firmware")
+
+	result = run_fw_pack("pack", input_bin, "LOANR01", packed_bin, check=False)
+
+	assert result.returncode != 0
+	assert not packed_bin.exists()
+
+
+def test_fw_pack_rejects_corrupt_crc(tmp_path):
+	packed_bin = tmp_path / "output.bin"
+	packed = bytearray(PACKER.pack_firmware(b"\x00" * 0x2100, "LOANR01"))
+	packed[100] ^= 0x01
+	packed_bin.write_bytes(packed)
+
+	result = run_fw_pack("verify", packed_bin, "LOANR01", check=False)
+
+	assert result.returncode != 0
+	assert "CRC mismatch" in result.stderr
+
+
+def test_fw_pack_rejects_metadata_mismatch(tmp_path):
+	packed_bin = tmp_path / "output.bin"
+	packed_bin.write_bytes(PACKER.pack_firmware(b"\x00" * 0x2100, "LOANR01"))
+
+	result = run_fw_pack("verify", packed_bin, "LOANR02", check=False)
+
+	assert result.returncode != 0
+	assert "suffix mismatch" in result.stderr
+
+
+def test_fw_pack_requires_a_subcommand():
+	result = run_fw_pack(check=False)
+
+	assert result.returncode != 0
+	assert "required" in result.stderr
