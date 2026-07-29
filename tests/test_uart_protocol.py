@@ -1,11 +1,11 @@
-import shutil
 import struct
 import subprocess
 from binascii import crc_hqx
 from itertools import cycle
-from pathlib import Path
 
 import pytest
+
+from tests.host_tools import ROOT, compile_c, host_runtime_environment
 
 
 OBFUSCATION = bytes(
@@ -60,29 +60,11 @@ def frame(payload, encrypted=True, corrupt_crc=False):
 
 @pytest.fixture(scope="session")
 def uart_harness(tmp_path_factory):
-    compiler = shutil.which("gcc")
-    if compiler is None:
-        pytest.skip("gcc is required for UART protocol host tests")
-
     executable = tmp_path_factory.mktemp("uart_protocol") / "uart_protocol_harness"
-    root = Path(__file__).resolve().parents[1]
-    subprocess.run(
-        [
-            compiler,
-            "-std=c11",
-            "-Wall",
-            "-Wextra",
-            "-Werror",
-            "-I",
-            str(root),
-            str(root / "tests" / "uart_protocol_harness.c"),
-            str(root / "app" / "uart_protocol.c"),
-            "-o",
-            str(executable),
-        ],
-        check=True,
+    return compile_c(
+        output=executable,
+        sources=[ROOT / "tests" / "uart_protocol_harness.c", ROOT / "app" / "uart_protocol.c"],
     )
-    return executable
 
 
 def validate(uart_harness, payload):
@@ -91,6 +73,7 @@ def validate(uart_harness, payload):
         check=True,
         capture_output=True,
         text=True,
+        env=host_runtime_environment(),
     )
     return result.stdout.strip() == "1"
 
@@ -108,6 +91,7 @@ def parse(uart_harness, packet, ring_size=256, start=0, encrypted=True):
         check=True,
         capture_output=True,
         text=True,
+        env=host_runtime_environment(),
     )
     frame_result, next_index, command_size, next_encrypted, command_id = result.stdout.split()
     return {
