@@ -433,7 +433,7 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo)
 		pInfo->pTX->Frequency);
 }
 
-void RADIO_ApplyOffset(VFO_Info_t *pInfo)
+void RADIO_ApplyOffset(VFO_Info_t* pInfo)
 {
 	uint32_t Frequency;
 
