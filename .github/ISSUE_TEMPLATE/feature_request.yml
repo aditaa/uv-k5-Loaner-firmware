@@ -1,0 +1,50 @@
+name: Improvement request
+description: Propose a focused firmware, tooling, documentation, or release improvement.
+title: "[Improvement]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Problem or operational need
+      description: Describe the user, field, maintenance, or release problem before proposing a solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Explain the smallest useful change and any alternatives considered.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Radio / RF / transmit
+        - UI / keypad / audio
+        - EEPROM / settings
+        - UART / CHIRP programming
+        - Build / CI / release artifacts
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: validation
+    attributes:
+      label: Expected validation
+      options:
+        - label: This likely needs physical radio testing.
+        - label: This may change firmware size or optional feature builds.
+        - label: This may change CHIRP or EEPROM compatibility.
+        - label: This should be mentioned in release notes.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable outcomes that would make the request complete.
+    validations:
+      required: true

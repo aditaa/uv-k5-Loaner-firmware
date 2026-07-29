@@ -16,6 +16,17 @@ Run the complete validation and build pipeline with an exact seven-character upp
 VERSION_SUFFIX=LNR2415 ./compile-with-docker.sh
 ```
 
+From Windows Command Prompt with Git for Windows installed, run the same
+pipeline through the batch wrapper:
+
+```bat
+set VERSION_SUFFIX=LNR2415
+compile-with-docker.bat
+```
+
+PowerShell users can set `$env:VERSION_SUFFIX = "LNR2415"` and then run
+`.\compile-with-docker.bat`.
+
 The wrapper runs the formatting check, cppcheck, pytest, and two clean ARM builds. The two raw images and two packed images must be byte-identical before it writes a verified bundle to `compiled-firmware/`:
 
 - `loaner-firmware-LNR2415.bin`
@@ -82,6 +93,10 @@ python3 ci/release_artifacts.py tag-to-suffix v24.10.5
 Before tagging, write the resulting value to the root `VERSION_SUFFIX` file and merge that change. The release workflow requires the file, tag, packed metadata, display banner, UART identifier, artifact names, and manifest to agree.
 
 ## Release Checklist
+
+The concise software, hardware, and publishing gate is maintained in
+[`docs/release-checklist.md`](docs/release-checklist.md). The version/tag steps
+below provide the detailed command sequence.
 
 1. Create a release branch from current `main`.
 2. Pick a `vYY.MM[.PATCH]` tag and derive its suffix.
