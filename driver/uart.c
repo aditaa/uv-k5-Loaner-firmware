@@ -18,6 +18,7 @@
 #include "bsp/dp32g030/dma.h"
 #include "bsp/dp32g030/syscon.h"
 #include "bsp/dp32g030/uart.h"
+#include "driver/hardware.h"
 #include "driver/uart.h"
 
 static bool UART_IsLogEnabled;
@@ -84,22 +85,26 @@ void UART_Init(void)
 	UART1->CTRL |= UART_CTRL_UARTEN_BITS_ENABLE;
 }
 
-void UART_Send(const void *pBuffer, uint32_t Size)
+bool UART_Send(const void *pBuffer, uint32_t Size)
 {
 	const uint8_t *pData = (const uint8_t *)pBuffer;
 	uint32_t i;
 
 	for (i = 0; i < Size; i++) {
 		UART1->TDR = pData[i];
-		while ((UART1->IF & UART_IF_TXFIFO_FULL_MASK) != UART_IF_TXFIFO_FULL_BITS_NOT_SET) {
+		if (!HARDWARE_WaitForRegister(&UART1->IF, UART_IF_TXFIFO_FULL_MASK, UART_IF_TXFIFO_FULL_BITS_NOT_SET, 100000U)) {
+			UART1->FIFO |= UART_FIFO_TF_CLR_BITS_ENABLE;
+			HARDWARE_ReportFault(HARDWARE_FAULT_UART);
+			return false;
 		}
 	}
+	return true;
 }
 
-void UART_LogSend(const void *pBuffer, uint32_t Size)
+bool UART_LogSend(const void *pBuffer, uint32_t Size)
 {
 	if (UART_IsLogEnabled) {
-		UART_Send(pBuffer, Size);
+		return UART_Send(pBuffer, Size);
 	}
+	return true;
 }
-

@@ -170,7 +170,7 @@ static uint16_t gUART_WriteIndex;
 static uint16_t UART_CommandSize;
 static bool bIsEncrypted = true;
 
-static void SendReply(void *pReply, uint16_t Size)
+static bool SendReply(void *pReply, uint16_t Size)
 {
 	Header_t Header;
 	Footer_t Footer;
@@ -186,8 +186,9 @@ static void SendReply(void *pReply, uint16_t Size)
 
 	Header.ID = 0xCDAB;
 	Header.Size = Size;
-	UART_Send(&Header, sizeof(Header));
-	UART_Send(pReply, Size);
+	if (!UART_Send(&Header, sizeof(Header)) || !UART_Send(pReply, Size)) {
+		return false;
+	}
 	if (bIsEncrypted) {
 		Footer.Padding[0] = Obfuscation[(Size + 0) % 16] ^ 0xFF;
 		Footer.Padding[1] = Obfuscation[(Size + 1) % 16] ^ 0xFF;
@@ -197,7 +198,7 @@ static void SendReply(void *pReply, uint16_t Size)
 	}
 	Footer.ID = 0xBADC;
 
-	UART_Send(&Footer, sizeof(Footer));
+	return UART_Send(&Footer, sizeof(Footer));
 }
 
 static void SendVersion(void)
@@ -226,7 +227,9 @@ static bool IsBadChallenge(const uint32_t *pKey, const uint32_t *pIn, const uint
 	IV[1] = 0;
 	IV[2] = 0;
 	IV[3] = 0;
-	AES_Encrypt(pKey, IV, pIn, IV, true);
+	if (!AES_Encrypt(pKey, IV, pIn, IV, true)) {
+		return true;
+	}
 	for (i = 0; i < 4; i++) {
 		if (IV[i] != pResponse[i]) {
 			return true;
@@ -271,7 +274,9 @@ static void CMD_051B(const uint8_t *pBuffer)
 	}
 
 	if (!bLocked) {
-		EEPROM_ReadBuffer(pCmd->Offset, Reply.Data.Data, pCmd->Size);
+		if (!EEPROM_ReadBuffer(pCmd->Offset, Reply.Data.Data, pCmd->Size)) {
+			return;
+		}
 	}
 
 	SendReply(&Reply, pCmd->Size + 8);
@@ -315,7 +320,9 @@ static void CMD_051D(const uint8_t *pBuffer)
 			}
 
 			if ((Offset < 0x0E98 || Offset >= 0x0EA0) || !bIsInLockScreen || pCmd->bAllowPassword) {
-				EEPROM_WriteBuffer(Offset, &pCmd->Data[i * 8U]);
+				if (!EEPROM_WriteBuffer(Offset, &pCmd->Data[i * 8U])) {
+					return;
+				}
 			}
 		}
 
@@ -347,7 +354,9 @@ static void CMD_0529(void)
 	Reply.Header.ID = 0x52A;
 	Reply.Header.Size = sizeof(Reply.Data);
 	// Original doesn't actually send current!
-	BOARD_ADC_GetBatteryInfo(&Reply.Data.Voltage, &Reply.Data.Current);
+	if (!BOARD_ADC_GetBatteryInfo(&Reply.Data.Voltage, &Reply.Data.Current)) {
+		return;
+	}
 	SendReply(&Reply, sizeof(Reply));
 }
 

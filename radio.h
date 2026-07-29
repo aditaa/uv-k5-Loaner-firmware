@@ -128,15 +128,15 @@ void RADIO_ConfigureChannel(uint8_t RadioNum, uint32_t Arg);
 void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo);
 void RADIO_ApplyOffset(VFO_Info_t *pInfo);
 void RADIO_SelectVfos(void);
-void RADIO_SetupRegisters(bool bSwitchToFunction0);
+bool RADIO_SetupRegisters(bool bSwitchToFunction0);
 void RADIO_ConfigureNOAA(void);
 void RADIO_SetTxParameters(void);
 
 void RADIO_SetVfoState(VfoState_t State);
+void RADIO_ForceSafeState(void);
 void RADIO_PrepareTX(void);
 void RADIO_EnableCxCSS(void);
 void RADIO_PrepareCssTX(void);
 void RADIO_SendEndOfTransmission(void);
 
 #endif
-

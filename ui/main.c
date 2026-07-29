@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include "driver/hardware.h"
 #include "driver/st7565.h"
 #include "external/printf/printf.h"
 #include "functions.h"
@@ -109,6 +110,39 @@ void UI_DisplayMain(void)
 	uint8_t i;
 
 	memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
+	if (HARDWARE_GetLastFault() != HARDWARE_FAULT_NONE) {
+		const char *pFault = "UNKNOWN";
+
+		switch (HARDWARE_GetLastFault()) {
+		case HARDWARE_FAULT_ADC:
+			pFault = "ADC TIMEOUT";
+			break;
+		case HARDWARE_FAULT_AES:
+			pFault = "AES TIMEOUT";
+			break;
+		case HARDWARE_FAULT_UART:
+			pFault = "UART TIMEOUT";
+			break;
+		case HARDWARE_FAULT_SPI:
+			pFault = "LCD TIMEOUT";
+			break;
+		case HARDWARE_FAULT_EEPROM:
+			pFault = "EEPROM ERROR";
+			break;
+		case HARDWARE_FAULT_BK4819:
+			pFault = "RADIO TIMEOUT";
+			break;
+		case HARDWARE_FAULT_FLASH:
+			pFault = "FLASH TIMEOUT";
+			break;
+		default:
+			break;
+		}
+		UI_PrintString("HARDWARE ERROR", 0, 127, 2, 8, true);
+		UI_PrintString(pFault, 0, 127, 4, 8, true);
+		ST7565_BlitFullScreen();
+		return;
+	}
 	if (gEeprom.KEY_LOCK && gKeypadLocked) {
 		UI_PrintString("Long Press #", 0, 127, 1, 8, true);
 		UI_PrintString("To Unlock", 0, 127, 3, 8, true);

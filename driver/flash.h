@@ -17,6 +17,8 @@
 #ifndef DRIVER_FLASH_H
 #define DRIVER_FLASH_H
 
+#include <stdbool.h>
+
 #include "bsp/dp32g030/flash.h"
 
 enum FLASH_READ_MODE {
@@ -51,9 +53,8 @@ enum FLASH_AREA {
 
 typedef enum FLASH_AREA FLASH_AREA;
 
-void FLASH_Init(FLASH_READ_MODE ReadMode);
-void FLASH_ConfigureTrimValues(void);
+bool FLASH_Init(FLASH_READ_MODE ReadMode);
+bool FLASH_ConfigureTrimValues(void);
 uint32_t FLASH_ReadNvrWord(uint32_t Address);
 
 #endif
-

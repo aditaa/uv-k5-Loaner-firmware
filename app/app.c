@@ -41,6 +41,7 @@
 #endif
 #include "driver/bk4819.h"
 #include "driver/gpio.h"
+#include "driver/hardware.h"
 #include "driver/keyboard.h"
 #include "driver/st7565.h"
 #include "driver/system.h"
@@ -500,15 +501,21 @@ static void DUALWATCH_Alternate(void)
 		gDualWatchCountdown = 10;
 }
 
-void APP_CheckRadioInterrupts(void)
+static bool APP_CheckRadioInterrupts(void)
 {
+	uint8_t PollLimit = 64U;
+
 	if (gScreenToDisplay == DISPLAY_SCANNER) {
-		return;
+		return true;
 	}
 
 	while (BK4819_ReadRegister(BK4819_REG_0C) & 1U) {
 		uint16_t Mask;
 
+		if (PollLimit-- == 0U) {
+			HARDWARE_ReportFault(HARDWARE_FAULT_BK4819);
+			return false;
+		}
 		BK4819_WriteRegister(BK4819_REG_02, 0);
 		Mask = BK4819_ReadRegister(BK4819_REG_02);
 		if (Mask & BK4819_REG_02_DTMF_5TONE_FOUND) {
@@ -579,6 +586,7 @@ void APP_CheckRadioInterrupts(void)
 		}
 #endif
 	}
+	return true;
 }
 
 void APP_EndTransmission(void)
@@ -642,6 +650,15 @@ static void APP_HandleVox(void)
 
 void APP_Update(void)
 {
+	const HARDWARE_Fault_t HardwareFault = HARDWARE_TakePendingFault();
+
+	if (HardwareFault != HARDWARE_FAULT_NONE) {
+		RADIO_ForceSafeState();
+		GUI_SelectNextDisplay(DISPLAY_MAIN);
+		gUpdateStatus  = HardwareFault != HARDWARE_FAULT_SPI;
+		gUpdateDisplay = HardwareFault != HARDWARE_FAULT_SPI;
+	}
+
 	if (gFlagPlayQueuedVoice) {
 		AUDIO_PlayQueuedVoice();
 		gFlagPlayQueuedVoice = false;
@@ -1659,4 +1676,3 @@ Skip:
 	GUI_SelectNextDisplay(gRequestDisplayScreen);
 	gRequestDisplayScreen = DISPLAY_INVALID;
 }
-

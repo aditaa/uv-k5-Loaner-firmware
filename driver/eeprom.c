@@ -14,42 +14,61 @@
  *     limitations under the License.
  */
 
+#include <stdbool.h>
+#include <string.h>
+
 #include "driver/eeprom.h"
+#include "driver/hardware.h"
 #include "driver/i2c.h"
 #include "driver/system.h"
 
-void EEPROM_ReadBuffer(uint16_t Address, void *pBuffer, uint8_t Size)
+bool EEPROM_ReadBuffer(uint16_t Address, void *pBuffer, uint8_t Size)
 {
+	bool Success = false;
+
+	if (Size == 0U) {
+		return true;
+	}
+	memset(pBuffer, 0xFF, Size);
 	I2C_Start();
 
-	I2C_Write(0xA0);
-
-	I2C_Write((Address >> 8) & 0xFF);
-	I2C_Write((Address >> 0) & 0xFF);
+	if (I2C_Write(0xA0) < 0 || I2C_Write((Address >> 8) & 0xFF) < 0 || I2C_Write((Address >> 0) & 0xFF) < 0) {
+		goto cleanup;
+	}
 
 	I2C_Start();
 
-	I2C_Write(0xA1);
+	if (I2C_Write(0xA1) < 0 || I2C_ReadBuffer(pBuffer, Size) != Size) {
+		goto cleanup;
+	}
+	Success = true;
 
-	I2C_ReadBuffer(pBuffer, Size);
-
+cleanup:
 	I2C_Stop();
+	if (!Success) {
+		memset(pBuffer, 0xFF, Size);
+		HARDWARE_ReportFault(HARDWARE_FAULT_EEPROM);
+	}
+	return Success;
 }
 
-void EEPROM_WriteBuffer(uint16_t Address, const void *pBuffer)
-
+bool EEPROM_WriteBuffer(uint16_t Address, const void *pBuffer)
 {
+	bool Success = false;
+
 	I2C_Start();
 
-	I2C_Write(0xA0);
+	if (I2C_Write(0xA0) < 0 || I2C_Write((Address >> 8) & 0xFF) < 0 || I2C_Write((Address >> 0) & 0xFF) < 0 || I2C_WriteBuffer(pBuffer, 8) < 0) {
+		goto cleanup;
+	}
+	Success = true;
 
-	I2C_Write((Address >> 8) & 0xFF);
-	I2C_Write((Address >> 0) & 0xFF);
-
-	I2C_WriteBuffer(pBuffer, 8);
-
+cleanup:
 	I2C_Stop();
-
-	SYSTEM_DelayMs(10);
+	if (Success) {
+		SYSTEM_DelayMs(10);
+	} else {
+		HARDWARE_ReportFault(HARDWARE_FAULT_EEPROM);
+	}
+	return Success;
 }
-

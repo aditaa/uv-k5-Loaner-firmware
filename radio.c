@@ -25,6 +25,7 @@
 #include "driver/bk4819.h"
 #include "driver/eeprom.h"
 #include "driver/gpio.h"
+#include "driver/hardware.h"
 #include "driver/system.h"
 #include "eeprom_validation.h"
 #include "frequencies.h"
@@ -478,12 +479,13 @@ void RADIO_SelectVfos(void)
 	RADIO_SelectCurrentVfo();
 }
 
-void RADIO_SetupRegisters(bool bSwitchToFunction0)
+bool RADIO_SetupRegisters(bool bSwitchToFunction0)
 {
 	BK4819_FilterBandwidth_t Bandwidth;
 	uint16_t Status;
 	uint16_t InterruptMask;
 	uint32_t Frequency;
+	uint8_t PollLimit = 100U;
 
 	GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
 	gEnableSpeaker = false;
@@ -500,13 +502,18 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0)
 	BK4819_SetupPowerAmplifier(0, 0);
 	BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);
 
-	while (1) {
+	do {
 		Status = BK4819_ReadRegister(BK4819_REG_0C);
 		if ((Status & 1U) == 0) { // INTERRUPT REQUEST
 			break;
 		}
 		BK4819_WriteRegister(BK4819_REG_02, 0);
 		SYSTEM_DelayMs(1);
+	} while (PollLimit-- != 0U);
+	if ((Status & 1U) != 0) {
+		HARDWARE_ReportFault(HARDWARE_FAULT_BK4819);
+		RADIO_ForceSafeState();
+		return false;
 	}
 	BK4819_WriteRegister(BK4819_REG_3F, 0);
 	BK4819_WriteRegister(BK4819_REG_7D, gEeprom.MIC_SENSITIVITY_TUNING | 0xE940);
@@ -619,6 +626,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0)
 	if (bSwitchToFunction0) {
 		FUNCTION_Select(FUNCTION_FOREGROUND);
 	}
+	return true;
 }
 
 #if defined(ENABLE_NOAA)
@@ -731,8 +739,29 @@ void RADIO_SetVfoState(VfoState_t State)
 	gUpdateDisplay = true;
 }
 
+void RADIO_ForceSafeState(void)
+{
+	GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+	gEnableSpeaker = false;
+	BK4819_WriteRegister(BK4819_REG_30, 0);
+	BK4819_SetupPowerAmplifier(0, 0);
+	BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);
+	BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
+	gPttIsPressed	     = false;
+	gFlagPrepareTX	     = false;
+	gFlagEndTransmission = false;
+	gTxTimerCountdown    = 0;
+	FUNCTION_Select(FUNCTION_FOREGROUND);
+	RADIO_SetVfoState(VFO_STATE_TX_DISABLE);
+}
+
 void RADIO_PrepareTX(void)
 {
+	if (HARDWARE_GetLastFault() != HARDWARE_FAULT_NONE) {
+		RADIO_ForceSafeState();
+		return;
+	}
+
 	if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
 		gDualWatchCountdown = 360;
 		gScheduleDualWatch = false;
