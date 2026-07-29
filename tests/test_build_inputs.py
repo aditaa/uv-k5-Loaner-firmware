@@ -94,3 +94,13 @@ def test_ci_suffixes_and_chirp_source_do_not_drift():
 	assert "VERSION_SUFFIX: LNR" not in codeql_workflow
 	assert "< VERSION_SUFFIX" in main_workflow
 	assert "< VERSION_SUFFIX" in codeql_workflow
+
+
+def test_release_workflow_uses_versioned_release_notes():
+	release_workflow = (ROOT / ".github" / "workflows" / "release.yaml").read_text(
+		encoding="utf-8"
+	)
+
+	assert 'VERSION_SUFFIX: ${{ steps.release.outputs.version_suffix }}' in release_workflow
+	assert '--notes-file "docs/releases/${VERSION_SUFFIX}.md"' in release_workflow
+	assert "--generate-notes" not in release_workflow

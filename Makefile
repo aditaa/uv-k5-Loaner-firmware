@@ -124,12 +124,12 @@ VERSION_SUFFIX ?= $(strip $(shell cat VERSION_SUFFIX 2>/dev/null))
 
 ifeq ($(MAKECMDGOALS),)
   ifeq ($(strip $(VERSION_SUFFIX)),)
-    $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or update the root VERSION_SUFFIX file.)
+    $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24C5 or update the root VERSION_SUFFIX file.)
   endif
 else
   ifneq ($(filter-out clean,$(MAKECMDGOALS)),)
     ifeq ($(strip $(VERSION_SUFFIX)),)
-      $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24A5 or update the root VERSION_SUFFIX file.)
+      $(error VERSION_SUFFIX is required. Set VERSION_SUFFIX=LNR24C5 or update the root VERSION_SUFFIX file.)
     endif
 endif
 endif

@@ -49,7 +49,7 @@ if [[ "${MODE}" == "cppcheck" ]]; then
 	exit 0
 fi
 
-: "${VERSION_SUFFIX:?VERSION_SUFFIX is required (set a 7-character value such as VERSION_SUFFIX=LNR2415 before running this script)}"
+: "${VERSION_SUFFIX:?VERSION_SUFFIX is required (set a 7-character value such as VERSION_SUFFIX=LNR24C5 before running this script)}"
 
 SOURCE_COMMIT="${SOURCE_COMMIT:-$(git rev-parse HEAD)}"
 if [[ ! "${SOURCE_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then

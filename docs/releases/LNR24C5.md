@@ -1,0 +1,47 @@
+# Loaner Firmware v24.12.5 — LNR24C5
+
+This release consolidates the firmware, compatibility, reliability, testing,
+and release-process work merged since `v24.12.4`.
+
+## Highlights
+
+- Allow transmit throughout the firmware-supported 50–76 MHz and 108–600 MHz
+  tuning ranges. Operators and programmers remain responsible for lawful and
+  hardware-appropriate frequency, power, mode, and equipment use.
+- Validate EEPROM settings and calibration data before use, and reject invalid
+  UART command bounds instead of allowing malformed values into firmware
+  state.
+- Add bounded recovery for I2C, SPI, UART, display, flash, AES, and BK4819
+  peripheral waits so a stalled device cannot trap the firmware forever.
+- Pin and continuously test the compatible upstream CHIRP UV-K5 driver path,
+  including the behavior discussed in `kk7ds/chirp#1414`.
+- Make ARM builds reproducible in a pinned container and publish verified raw,
+  packed, manifest, and SHA-256 artifacts whose tag and embedded identifiers
+  must agree.
+- Add 114 sanitizer-backed host tests, deterministic formatting/static-analysis
+  checks, structured contribution templates, protected-branch checks, and a
+  documented software/hardware release gate.
+- Remove unreachable main-screen key-dispatch leftovers while retaining UART,
+  CHIRP, scanning, DTMF, voice prompts, and the boot-time maintenance menu.
+
+## Compatibility and identifiers
+
+- Display banner: `OEFW-LNR24C5`
+- UART programming identifier: `1.02.LNR24C5`
+- Packed metadata: `*OEFW-LNR24C5`
+- Release tag: `v24.12.5`
+
+## Expected release assets
+
+- `loaner-firmware-LNR24C5.bin`
+- `loaner-firmware-LNR24C5.packed.bin`
+- `loaner-firmware-LNR24C5.manifest.json`
+- `loaner-firmware-LNR24C5.sha256`
+
+## Hardware release gates
+
+Do not publish the release until the results are recorded and accepted in:
+
+- #56 — complete radio hardware qualification;
+- #37 — unlocked-band RF/transmit bench validation; and
+- #46 — USB-C charging and charging-current diagnosis.
