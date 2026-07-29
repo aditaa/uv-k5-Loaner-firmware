@@ -33,6 +33,7 @@ run_cppcheck() {
 		"${ROOT}/board.c" \
 		"${ROOT}/dcs.c" \
 		"${ROOT}/driver" \
+		"${ROOT}/eeprom_validation.c" \
 		"${ROOT}/functions.c" \
 		"${ROOT}/helper" \
 		"${ROOT}/misc.c" \

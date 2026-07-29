@@ -36,6 +36,7 @@
 #include "driver/gpio.h"
 #include "driver/system.h"
 #include "driver/st7565.h"
+#include "eeprom_validation.h"
 #include "frequencies.h"
 #include "helper/battery.h"
 #include "misc.h"
@@ -515,36 +516,36 @@ void BOARD_EEPROM_Init(void)
 
 	// 0E70..0E77
 	EEPROM_ReadBuffer(0x0E70, Data, 8);
-	gEeprom.CHAN_1_CALL      = IS_MR_CHANNEL(Data[0]) ? Data[0] : MR_CHANNEL_FIRST;
-	gEeprom.SQUELCH_LEVEL    = (Data[1] < 10) ? Data[1] : 4;
-	gEeprom.TX_TIMEOUT_TIMER = (Data[2] < 11) ? Data[2] : 2;
-	gEeprom.NOAA_AUTO_SCAN   = (Data[3] <  2) ? Data[3] : true;
-	gEeprom.KEY_LOCK         = (Data[4] <  2) ? Data[4] : false;
-	gEeprom.VOX_SWITCH       = (Data[5] <  2) ? Data[5] : false;
-	gEeprom.VOX_LEVEL        = (Data[6] < 10) ? Data[6] : 5;
-	gEeprom.MIC_SENSITIVITY  = (Data[7] <  5) ? Data[7] : 2;
+	gEeprom.CHAN_1_CALL	 = EEPROM_ValidateChannel(Data[0], MR_CHANNEL_FIRST, MR_CHANNEL_LAST, MR_CHANNEL_FIRST);
+	gEeprom.SQUELCH_LEVEL	 = EEPROM_ValidateU8(Data[1], 10U, 4U);
+	gEeprom.TX_TIMEOUT_TIMER = EEPROM_ValidateU8(Data[2], 11U, 2U);
+	gEeprom.NOAA_AUTO_SCAN	 = EEPROM_ValidateBool(Data[3], true);
+	gEeprom.KEY_LOCK	 = EEPROM_ValidateBool(Data[4], false);
+	gEeprom.VOX_SWITCH	 = EEPROM_ValidateBool(Data[5], false);
+	gEeprom.VOX_LEVEL	 = EEPROM_ValidateU8(Data[6], 10U, 5U);
+	gEeprom.MIC_SENSITIVITY	 = EEPROM_ValidateU8(Data[7], 5U, 2U);
 
 	// 0E78..0E7F
 	EEPROM_ReadBuffer(0x0E78, Data, 8);
 	gEeprom.CHANNEL_DISPLAY_MODE  = MDF_NAME;
-	gEeprom.CROSS_BAND_RX_TX      = (Data[2] < 3) ? Data[2] : CROSS_BAND_OFF;
-	gEeprom.BATTERY_SAVE          = (Data[3] < 5) ? Data[3] : 4;
-	gEeprom.DUAL_WATCH            = (Data[4] < 3) ? Data[4] : DUAL_WATCH_CHAN_A;
-	gEeprom.BACKLIGHT             = (Data[5] < 6) ? Data[5] : 5;
-	gEeprom.TAIL_NOTE_ELIMINATION = (Data[6] < 2) ? Data[6] : true;
-	gEeprom.VFO_OPEN              = false;
+	gEeprom.CROSS_BAND_RX_TX      = EEPROM_ValidateU8(Data[2], 3U, CROSS_BAND_OFF);
+	gEeprom.BATTERY_SAVE	      = EEPROM_ValidateU8(Data[3], 5U, 4U);
+	gEeprom.DUAL_WATCH	      = EEPROM_ValidateU8(Data[4], 3U, DUAL_WATCH_CHAN_A);
+	gEeprom.BACKLIGHT	      = EEPROM_ValidateU8(Data[5], 6U, 5U);
+	gEeprom.TAIL_NOTE_ELIMINATION = EEPROM_ValidateBool(Data[6], true);
+	gEeprom.VFO_OPEN	      = false;
 
 	// 0E80..0E87
 	EEPROM_ReadBuffer(0x0E80, Data, 8);
-	gEeprom.ScreenChannel[0] = IS_VALID_CHANNEL(Data[0]) ? Data[0] : (FREQ_CHANNEL_FIRST + BAND6_400MHz);
-	gEeprom.ScreenChannel[1] = IS_VALID_CHANNEL(Data[3]) ? Data[3] : (FREQ_CHANNEL_FIRST + BAND6_400MHz);
-	gEeprom.MrChannel[0]     = IS_MR_CHANNEL(Data[1])    ? Data[1] : MR_CHANNEL_FIRST;
-	gEeprom.MrChannel[1]     = IS_MR_CHANNEL(Data[4])    ? Data[4] : MR_CHANNEL_FIRST;
-	gEeprom.FreqChannel[0]   = IS_FREQ_CHANNEL(Data[2])  ? Data[2] : (FREQ_CHANNEL_FIRST + BAND6_400MHz);
-	gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data[5])  ? Data[5] : (FREQ_CHANNEL_FIRST + BAND6_400MHz);
+	gEeprom.ScreenChannel[0] = EEPROM_ValidateChannel(Data[0], MR_CHANNEL_FIRST, LAST_CHANNEL - 1U, FREQ_CHANNEL_FIRST + BAND6_400MHz);
+	gEeprom.ScreenChannel[1] = EEPROM_ValidateChannel(Data[3], MR_CHANNEL_FIRST, LAST_CHANNEL - 1U, FREQ_CHANNEL_FIRST + BAND6_400MHz);
+	gEeprom.MrChannel[0]	 = EEPROM_ValidateChannel(Data[1], MR_CHANNEL_FIRST, MR_CHANNEL_LAST, MR_CHANNEL_FIRST);
+	gEeprom.MrChannel[1]	 = EEPROM_ValidateChannel(Data[4], MR_CHANNEL_FIRST, MR_CHANNEL_LAST, MR_CHANNEL_FIRST);
+	gEeprom.FreqChannel[0]	 = EEPROM_ValidateChannel(Data[2], FREQ_CHANNEL_FIRST, FREQ_CHANNEL_LAST, FREQ_CHANNEL_FIRST + BAND6_400MHz);
+	gEeprom.FreqChannel[1]	 = EEPROM_ValidateChannel(Data[5], FREQ_CHANNEL_FIRST, FREQ_CHANNEL_LAST, FREQ_CHANNEL_FIRST + BAND6_400MHz);
 #if defined(ENABLE_NOAA)
-	gEeprom.NoaaChannel[0]   = IS_NOAA_CHANNEL(Data[6])  ? Data[6] : NOAA_CHANNEL_FIRST;
-	gEeprom.NoaaChannel[1]   = IS_NOAA_CHANNEL(Data[7])  ? Data[7] : NOAA_CHANNEL_FIRST;
+	gEeprom.NoaaChannel[0] = EEPROM_ValidateChannel(Data[6], NOAA_CHANNEL_FIRST, NOAA_CHANNEL_LAST, NOAA_CHANNEL_FIRST);
+	gEeprom.NoaaChannel[1] = EEPROM_ValidateChannel(Data[7], NOAA_CHANNEL_FIRST, NOAA_CHANNEL_LAST, NOAA_CHANNEL_FIRST);
 #endif
 
 #if defined(ENABLE_FMRADIO)
@@ -565,8 +566,8 @@ void BOARD_EEPROM_Init(void)
 		gEeprom.FM_SelectedFrequency = FM.SelectedFrequency;
 	}
 
-	gEeprom.FM_SelectedChannel = FM.SelectedChannel;
-	gEeprom.FM_IsMrMode = (FM.IsMrMode < 2) ? FM.IsMrMode : false;
+	gEeprom.FM_SelectedChannel = EEPROM_ValidateU8(FM.SelectedChannel, 20U, 0U);
+	gEeprom.FM_IsMrMode	   = EEPROM_ValidateBool(FM.IsMrMode, false);
 
 	// 0E40..0E67
 	EEPROM_ReadBuffer(0x0E40, gFM_Channels, sizeof(gFM_Channels));
@@ -575,14 +576,14 @@ void BOARD_EEPROM_Init(void)
 
 	// 0E90..0E97
 	EEPROM_ReadBuffer(0x0E90, Data, 8);
-	gEeprom.BEEP_CONTROL             = (Data[0] < 2) ? Data[0] : true;
-	gEeprom.KEY_1_SHORT_PRESS_ACTION = (Data[1] < 9) ? Data[1] : 3;
-	gEeprom.KEY_1_LONG_PRESS_ACTION  = (Data[2] < 9) ? Data[2] : 8;
-	gEeprom.KEY_2_SHORT_PRESS_ACTION = (Data[3] < 9) ? Data[3] : 1;
-	gEeprom.KEY_2_LONG_PRESS_ACTION  = (Data[4] < 9) ? Data[4] : 6;
-	gEeprom.SCAN_RESUME_MODE         = (Data[5] < 3) ? Data[5] : SCAN_RESUME_CO;
-	gEeprom.AUTO_KEYPAD_LOCK         = (Data[6] < 2) ? Data[6] : true;
-	gEeprom.POWER_ON_DISPLAY_MODE    = (Data[7] < 3) ? Data[7] : POWER_ON_DISPLAY_MODE_MESSAGE;
+	gEeprom.BEEP_CONTROL		 = EEPROM_ValidateBool(Data[0], true);
+	gEeprom.KEY_1_SHORT_PRESS_ACTION = EEPROM_ValidateU8(Data[1], 9U, 3U);
+	gEeprom.KEY_1_LONG_PRESS_ACTION	 = EEPROM_ValidateU8(Data[2], 9U, 8U);
+	gEeprom.KEY_2_SHORT_PRESS_ACTION = EEPROM_ValidateU8(Data[3], 9U, 1U);
+	gEeprom.KEY_2_LONG_PRESS_ACTION	 = EEPROM_ValidateU8(Data[4], 9U, 6U);
+	gEeprom.SCAN_RESUME_MODE	 = EEPROM_ValidateU8(Data[5], 3U, SCAN_RESUME_CO);
+	gEeprom.AUTO_KEYPAD_LOCK	 = EEPROM_ValidateBool(Data[6], true);
+	gEeprom.POWER_ON_DISPLAY_MODE	 = EEPROM_ValidateU8(Data[7], 3U, POWER_ON_DISPLAY_MODE_MESSAGE);
 
 	// 0E98..0E9F
 	EEPROM_ReadBuffer(0x0E98, Data, 8);
@@ -590,33 +591,33 @@ void BOARD_EEPROM_Init(void)
 
 	// 0EA0..0EA7
 	EEPROM_ReadBuffer(0x0EA0, Data, 8);
-	gEeprom.VOICE_PROMPT = (Data[0] < 3) ? Data[0] : VOICE_PROMPT_CHINESE;
+	gEeprom.VOICE_PROMPT = EEPROM_ValidateU8(Data[0], 3U, VOICE_PROMPT_CHINESE);
 
 	// 0EA8..0EAF
 	EEPROM_ReadBuffer(0x0EA8, Data, 8);
 #if defined(ENABLE_ALARM)
-	gEeprom.ALARM_MODE                     = (Data[0] <  2) ? Data[0] : true;
+	gEeprom.ALARM_MODE = EEPROM_ValidateU8(Data[0], 2U, ALARM_MODE_TONE);
 #endif
-	gEeprom.ROGER                          = (Data[1] <  3) ? Data[1] : ROGER_MODE_OFF;
-	gEeprom.REPEATER_TAIL_TONE_ELIMINATION = (Data[2] < 11) ? Data[2] : 0;
-	gEeprom.TX_VFO                         = (Data[3] <  2) ? Data[3] : 0;
+	gEeprom.ROGER			       = EEPROM_ValidateU8(Data[1], 3U, ROGER_MODE_OFF);
+	gEeprom.REPEATER_TAIL_TONE_ELIMINATION = EEPROM_ValidateU8(Data[2], 11U, 0U);
+	gEeprom.TX_VFO			       = EEPROM_ValidateU8(Data[3], 2U, 0U);
 
 	// 0ED0..0ED7
 	EEPROM_ReadBuffer(0x0ED0, Data, 8);
-	gEeprom.DTMF_SIDE_TONE               = (Data[0] <   2) ? Data[0] : true;
-	gEeprom.DTMF_SEPARATE_CODE           = DTMF_ValidateCodes((char *)(Data + 1), 1) ? Data[1] : '*';
-	gEeprom.DTMF_GROUP_CALL_CODE         = DTMF_ValidateCodes((char *)(Data + 2), 1) ? Data[2] : '#';
-	gEeprom.DTMF_DECODE_RESPONSE         = (Data[3] <   4) ? Data[3] : 0;
-	gEeprom.DTMF_AUTO_RESET_TIME         = (Data[4] <  61) ? Data[4] : 5;
-	gEeprom.DTMF_PRELOAD_TIME            = (Data[5] < 101) ? Data[5] * 10 : 300;
-	gEeprom.DTMF_FIRST_CODE_PERSIST_TIME = (Data[6] < 101) ? Data[6] * 10 : 100;
-	gEeprom.DTMF_HASH_CODE_PERSIST_TIME  = (Data[7] < 101) ? Data[7] * 10 : 100;
+	gEeprom.DTMF_SIDE_TONE		     = EEPROM_ValidateBool(Data[0], true);
+	gEeprom.DTMF_SEPARATE_CODE	     = DTMF_ValidateCodes((char *)(Data + 1), 1) ? Data[1] : '*';
+	gEeprom.DTMF_GROUP_CALL_CODE	     = DTMF_ValidateCodes((char *)(Data + 2), 1) ? Data[2] : '#';
+	gEeprom.DTMF_DECODE_RESPONSE	     = EEPROM_ValidateU8(Data[3], 4U, 0U);
+	gEeprom.DTMF_AUTO_RESET_TIME	     = EEPROM_ValidateU8(Data[4], 61U, 5U);
+	gEeprom.DTMF_PRELOAD_TIME	     = EEPROM_ValidateU8(Data[5], 101U, 30U) * 10U;
+	gEeprom.DTMF_FIRST_CODE_PERSIST_TIME = EEPROM_ValidateU8(Data[6], 101U, 10U) * 10U;
+	gEeprom.DTMF_HASH_CODE_PERSIST_TIME  = EEPROM_ValidateU8(Data[7], 101U, 10U) * 10U;
 
 	// 0ED8..0EDF
 	EEPROM_ReadBuffer(0x0ED8, Data, 8);
-	gEeprom.DTMF_CODE_PERSIST_TIME  = (Data[0] < 101) ? Data[0] * 10 : 100;
-	gEeprom.DTMF_CODE_INTERVAL_TIME = (Data[1] < 101) ? Data[1] * 10 : 100;
-	gEeprom.PERMIT_REMOTE_KILL      = (Data[2] <   2) ? Data[2] : true;
+	gEeprom.DTMF_CODE_PERSIST_TIME	= EEPROM_ValidateU8(Data[0], 101U, 10U) * 10U;
+	gEeprom.DTMF_CODE_INTERVAL_TIME = EEPROM_ValidateU8(Data[1], 101U, 10U) * 10U;
+	gEeprom.PERMIT_REMOTE_KILL	= EEPROM_ValidateBool(Data[2], true);
 
 	// 0EE0..0EE7
 	EEPROM_ReadBuffer(0x0EE0, Data, 8);
@@ -662,13 +663,13 @@ void BOARD_EEPROM_Init(void)
 	// 0F18..0F1F
 	EEPROM_ReadBuffer(0x0F18, Data, 8);
 
-	gEeprom.SCAN_LIST_DEFAULT = (Data[0] < 2) ? Data[0] : false;
+	gEeprom.SCAN_LIST_DEFAULT = EEPROM_ValidateU8(Data[0], 2U, 0U);
 
 	for (i = 0; i < 2; i++) {
 		uint8_t j = (i * 3) + 1;
-		gEeprom.SCAN_LIST_ENABLED[i]     = (Data[j] < 2) ? Data[j] : false;
-		gEeprom.SCANLIST_PRIORITY_CH1[i] = Data[j + 1];
-		gEeprom.SCANLIST_PRIORITY_CH2[i] = Data[j + 2];
+		gEeprom.SCAN_LIST_ENABLED[i]	 = EEPROM_ValidateBool(Data[j], false);
+		gEeprom.SCANLIST_PRIORITY_CH1[i] = EEPROM_ValidateChannel(Data[j + 1], MR_CHANNEL_FIRST, MR_CHANNEL_LAST, EEPROM_PRIORITY_CHANNEL_DISABLED);
+		gEeprom.SCANLIST_PRIORITY_CH2[i] = EEPROM_ValidateChannel(Data[j + 2], MR_CHANNEL_FIRST, MR_CHANNEL_LAST, EEPROM_PRIORITY_CHANNEL_DISABLED);
 	}
 
 	// 0F40..0F47
@@ -681,11 +682,11 @@ void BOARD_EEPROM_Init(void)
 	gLowerLimitFrequencyBandTable = LowerLimitFrequencyBandTable;
 
 	gSetting_350TX		= true;
-	gSetting_KILLED		= (Data[2] < 2) ? Data[2] : false;
+	gSetting_KILLED		= EEPROM_ValidateBool(Data[2], false);
 	gSetting_200TX		= true;
 	gSetting_500TX		= true;
 	gSetting_350EN		= true;
-	gSetting_ScrambleEnable = (Data[6] < 2) ? Data[6] : true;
+	gSetting_ScrambleEnable = EEPROM_ValidateBool(Data[6], true);
 
 	if (IS_FREQ_CHANNEL(gEeprom.ScreenChannel[0])) {
 		gEeprom.ScreenChannel[0] = gEeprom.MrChannel[0];
@@ -715,28 +716,27 @@ void BOARD_EEPROM_LoadCalibration(void)
 	uint8_t Mic;
 
 	EEPROM_ReadBuffer(0x1EC0, gEEPROM_RSSI_CALIB[3], 8);
+	EEPROM_ValidateRssiCalibration(gEEPROM_RSSI_CALIB[3]);
 	memcpy(gEEPROM_RSSI_CALIB[4], gEEPROM_RSSI_CALIB[3], 8);
 	memcpy(gEEPROM_RSSI_CALIB[5], gEEPROM_RSSI_CALIB[3], 8);
 	memcpy(gEEPROM_RSSI_CALIB[6], gEEPROM_RSSI_CALIB[3], 8);
 
 	EEPROM_ReadBuffer(0x1EC8, gEEPROM_RSSI_CALIB[0], 8);
+	EEPROM_ValidateRssiCalibration(gEEPROM_RSSI_CALIB[0]);
 	memcpy(gEEPROM_RSSI_CALIB[1], gEEPROM_RSSI_CALIB[0], 8);
 	memcpy(gEEPROM_RSSI_CALIB[2], gEEPROM_RSSI_CALIB[0], 8);
 
 	EEPROM_ReadBuffer(0x1F40, gBatteryCalibration, 12);
-	if (gBatteryCalibration[0] >= 5000) {
-		gBatteryCalibration[0] = 1900;
-		gBatteryCalibration[1] = 2000;
-	}
-	gBatteryCalibration[5] = 2300;
+	EEPROM_ValidateBatteryCalibration(gBatteryCalibration);
 
 	EEPROM_ReadBuffer(0x1F50 + (gEeprom.VOX_LEVEL * 2), &gEeprom.VOX1_THRESHOLD, 2);
 	EEPROM_ReadBuffer(0x1F68 + (gEeprom.VOX_LEVEL * 2), &gEeprom.VOX0_THRESHOLD, 2);
 
 	EEPROM_ReadBuffer(0x1F80 + gEeprom.MIC_SENSITIVITY, &Mic, 1);
-	gEeprom.MIC_SENSITIVITY_TUNING = (Mic < 32) ? Mic : 15;
+	gEeprom.MIC_SENSITIVITY_TUNING = EEPROM_ValidateU8(Mic, 32U, 15U);
 
-	struct {
+	struct
+	{
 		int16_t BK4819_XtalFreqLow;
 		uint16_t EEPROM_1F8A;
 		uint16_t EEPROM_1F8C;
@@ -750,8 +750,8 @@ void BOARD_EEPROM_LoadCalibration(void)
 	gEEPROM_1F8A = Misc.EEPROM_1F8A & 0x01FF;
 	gEEPROM_1F8C = Misc.EEPROM_1F8C & 0x01FF;
 
-	gEeprom.VOLUME_GAIN = (Misc.VOLUME_GAIN < 64) ? Misc.VOLUME_GAIN : 58;
-	gEeprom.DAC_GAIN    = (Misc.DAC_GAIN    < 16) ? Misc.DAC_GAIN : 8;
+	gEeprom.VOLUME_GAIN = EEPROM_ValidateU8(Misc.VOLUME_GAIN, 64U, 58U);
+	gEeprom.DAC_GAIN    = EEPROM_ValidateU8(Misc.DAC_GAIN, 16U, 8U);
 
 	BK4819_WriteRegister(BK4819_REG_3B, gEeprom.BK4819_XTAL_FREQ_LOW + 22656);
 }

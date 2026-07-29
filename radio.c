@@ -26,6 +26,7 @@
 #include "driver/eeprom.h"
 #include "driver/gpio.h"
 #include "driver/system.h"
+#include "eeprom_validation.h"
 #include "frequencies.h"
 #include "functions.h"
 #include "helper/battery.h"
@@ -235,24 +236,15 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 	if (Configure == VFO_CONFIGURE_RELOAD || Channel >= FREQ_CHANNEL_FIRST) {
 		EEPROM_ReadBuffer(Base + 8, Data, 8);
 
-		Tmp = Data[3] & 0x0F;
-		if (Tmp > 2) {
-			Tmp = 0;
-		}
+		Tmp						 = EEPROM_ValidateU8(Data[3] & 0x0FU, 3U, FREQUENCY_DEVIATION_OFF);
 		gEeprom.VfoInfo[VFO].FREQUENCY_DEVIATION_SETTING = Tmp;
 		gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE = !!(Data[3] & 0x10);
 
-		Tmp = Data[6];
-		if (Tmp > STEP_8_33kHz) {
-			Tmp = STEP_25_0kHz;
-		}
+		Tmp				   = EEPROM_ValidateU8(Data[6], STEP_8_33kHz + 1U, STEP_25_0kHz);
 		gEeprom.VfoInfo[VFO].STEP_SETTING = Tmp;
 		gEeprom.VfoInfo[VFO].StepFrequency = StepFrequencyTable[Tmp];
 
-		Tmp = Data[7];
-		if (Tmp > 10) {
-			Tmp = 0;
-		}
+		Tmp				       = EEPROM_ValidateU8(Data[7], 11U, 0U);
 		gEeprom.VfoInfo[VFO].SCRAMBLING_TYPE = Tmp;
 		gEeprom.VfoInfo[VFO].ConfigRX.CodeType = (Data[2] >> 0) & 0x0F;
 		gEeprom.VfoInfo[VFO].ConfigTX.CodeType = (Data[2] >> 4) & 0x0F;
@@ -305,7 +297,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Configure)
 		} else {
 			gEeprom.VfoInfo[VFO].FrequencyReverse = !!(Data[4] & 0x01);
 			gEeprom.VfoInfo[VFO].CHANNEL_BANDWIDTH = !!(Data[4] & 0x02);
-			gEeprom.VfoInfo[VFO].OUTPUT_POWER = (Data[4] >> 2) & 0x03;
+			gEeprom.VfoInfo[VFO].OUTPUT_POWER      = EEPROM_ValidateOutputPower((Data[4] >> 2) & 0x03U);
 			gEeprom.VfoInfo[VFO].BUSY_CHANNEL_LOCK = !!(Data[4] & 0x10);
 		}
 		if (Data[5] == 0xFF) {
@@ -411,16 +403,18 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo)
 	}
 
 	Band = FREQUENCY_GetBand(pInfo->pTX->Frequency);
+	pInfo->OUTPUT_POWER = EEPROM_ValidateOutputPower(pInfo->OUTPUT_POWER);
 	EEPROM_ReadBuffer(0x1ED0 + (Band * 0x10) + (pInfo->OUTPUT_POWER * 3), Txp, 3);
+	EEPROM_ValidatePaCalibration(Txp);
 	pInfo->TXP_CalculatedSetting =
 		FREQUENCY_CalculateOutputPower(
-				Txp[0],
-				Txp[1],
-				Txp[2],
-				LowerLimitFrequencyBandTable[Band],
-				MiddleFrequencyBandTable[Band],
-				UpperLimitFrequencyBandTable[Band],
-				pInfo->pTX->Frequency);
+			Txp[0],
+			Txp[1],
+			Txp[2],
+			LowerLimitFrequencyBandTable[Band],
+			MiddleFrequencyBandTable[Band],
+			UpperLimitFrequencyBandTable[Band],
+			pInfo->pTX->Frequency);
 }
 
 void RADIO_ApplyOffset(VFO_Info_t *pInfo)

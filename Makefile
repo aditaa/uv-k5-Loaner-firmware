@@ -72,6 +72,7 @@ OBJS += audio.o
 OBJS += bitmaps.o
 OBJS += board.o
 OBJS += dcs.o
+OBJS += eeprom_validation.o
 OBJS += font.o
 OBJS += frequencies.o
 OBJS += functions.o
