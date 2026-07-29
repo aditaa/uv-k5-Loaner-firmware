@@ -45,8 +45,9 @@ python3 fw-pack.py loaner-firmware.bin LNR2415 loaner-firmware.packed.bin
 - The packed image is required for PC loader flashing because it carries the metadata Quansheng's tool expects.
 
 ## Running Lint and Tests
-- `./compile-with-docker.sh` already executes `ci/run.sh`, so every Docker build runs cppcheck, pytest, and the firmware build in one shot.
-- GitHub Actions runs dedicated lint stages before building: a style job (`ruff` over the Python tooling and `shellcheck` over the scripts), a `clang-format` diff check on C/C++ changes, and a `cppcheck` pass on the firmware sources. Fix issues reported there before kicking off full builds. To run the format check locally, export the same diff and pipe it into `clang-format-diff -p1`.
+- `./compile-with-docker.sh` already executes `ci/run.sh`, so every Docker build runs the changed-line format check, cppcheck, pytest, and the firmware build in one shot.
+- GitHub Actions and the Docker image both install clang-format 14.0.6 from `ci/requirements-format.txt` and invoke `ci/check-clang-format.sh`. The check uses a zero-context diff and formats only C lines changed from `origin/main`; existing untouched source is the controlled baseline.
+- For native development, install the pinned formatter with `python -m pip install -r ci/requirements-format.txt`. Run `ci/check-clang-format.sh` to check your changes or `ci/check-clang-format.sh --fix` to apply the canonical style to changed lines. Pass a different base ref as the final argument when needed, for example `ci/check-clang-format.sh --fix origin/release`.
 - A CHIRP compatibility check clones the driver repo (defaulting to our whitelist branch), asserts that the latest `OEFW-LNR…` banner still passes `k5_approve_firmware`, revalidates that the firmware keeps the OEM channel bounds (MR channels 0–199, etc.), and runs a subset of the UV-K5 driver tests (memory edits/settings mutations). Update `COMPAT_SUFFIX` or the tracked CHIRP ref when cutting new releases so uploads keep working.
 - If you are working natively, `ci/run.sh` reproduces the same flow once the dependencies are installed (see the Dockerfile for the package list). Run it with the same suffix to mirror CI:
   ```sh

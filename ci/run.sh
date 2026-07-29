@@ -53,6 +53,9 @@ fi
 mkdir -p "${ARTIFACT_DIR}"
 rm -f "${ARTIFACT_DIR}"/loaner-firmware*.bin
 
+echo "Checking C formatting..."
+"${ROOT}/ci/check-clang-format.sh"
+
 run_cppcheck
 
 echo "Running unit tests..."
