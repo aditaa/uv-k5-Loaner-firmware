@@ -103,7 +103,9 @@ below provide the detailed command sequence.
 1. Create a release branch from current `main`.
 2. Pick a `vYY.MM[.PATCH]` tag and derive its suffix.
 3. Update `VERSION_SUFFIX`, build with that suffix, and run all checks, including the two-build hash comparison.
-4. Flash the packed image and confirm the displayed version on hardware.
+4. Flash the packed image with the
+   [Egzumer UV Tools web flasher](https://egzumer.github.io/uvtools/) and confirm
+   the displayed version on hardware.
 5. Merge the release preparation PR.
 6. Tag the exact merge commit and push the annotated tag:
 

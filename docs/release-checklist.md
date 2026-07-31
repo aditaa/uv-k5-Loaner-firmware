@@ -18,10 +18,11 @@
 - [ ] USB-C charging/current behavior is verified on the intended hardware revisions and cable orientations.
 - [ ] Any optional feature enabled for the release is exercised on hardware.
 - [ ] Results and equipment details are recorded in the linked hardware issues.
+- [ ] Any incomplete result is explicitly deferred by the release owner with its reason, risk, and follow-up issue recorded in the release notes.
 
 ## Publish
 
 - [ ] Merge the release-preparation PR and tag that exact `main` commit.
 - [ ] Confirm the automated GitHub release contains the verified four-file bundle.
 - [ ] Download the published assets once and verify the manifest/checksums independently.
-- [ ] Keep the release blocked if a required hardware result is missing or failed.
+- [ ] Keep the release blocked if a required hardware result is missing or failed and has not been explicitly deferred and documented by the release owner.

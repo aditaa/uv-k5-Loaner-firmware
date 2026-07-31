@@ -10,10 +10,11 @@ The project also gives COML/COMT staff a predictable path from the ICS-205 form 
 
 ## Quickstart
 1. Download the latest suffix-bearing packed release (for example `loaner-firmware-LNR24C5.packed.bin`) from the Releases page and, when practical, compare it with the published SHA-256 file.
-2. With the radio powered off, hold the **PTT** and the **top side key** while turning it on. The display should stay blank, indicating the bootloader is active.
-3. Connect the USB cable, open Quansheng's PC programming tool, select *Firmware Update*, point it at the packed image, and start the transfer.
-4. After the loader reports success, power the radio off and back on to confirm the welcome screen shows the release tag from the packed image.
-5. Spin the channel knob and verify that the loaner channel names appear as expected.
+2. Open the [Egzumer UV Tools web flasher](https://egzumer.github.io/uvtools/) in a browser that supports serial-device access, then choose **Select firmware file** and select the packed image.
+3. With the radio powered off, hold the **PTT** and the **top side key** while turning it on. The display should stay blank, indicating the bootloader is active.
+4. Connect the USB programming cable, choose **Flash firmware**, select the radio's serial port if prompted, and do not disconnect power or the cable until the transfer completes.
+5. Power the radio off and back on to confirm the welcome screen shows the release tag from the packed image.
+6. Spin the channel knob and verify that the loaner channel names appear as expected.
 
 ## Design Goals
 - Put channel-only handsets in the hands of volunteers who have minimal or no radio training.
@@ -56,22 +57,15 @@ The current firmware intentionally keeps the OEM-compatible EEPROM layout. If th
 Tip: Keep a CHIRP image with the baseline loaner plan in source control so teams can diff changes before distributing updates. After each upload, rotate the knob and confirm the ICS-205 names match the paperwork.
 
 ## Flashing
-### Quansheng PC Loader (recommended)
-1. Install Quansheng's UV-K5/K6 programming utility if it is not already on your workstation.
-2. Copy the packed binary locally - the metadata is required by Quansheng's loader.
-3. With the radio powered off, hold **PTT** + **top side key** and power it on to enter firmware download mode (the screen remains blank).
-4. Connect the USB cable (CH340 driver) and confirm the loader detects the serial port.
-5. Choose *Firmware Update*, select the packed binary, and start the process. Do not disconnect power until the loader reports completion.
-6. Power-cycle the radio and confirm the loaner splash/version text is displayed.
 
-### J-Link / OpenOCD (`make flash`)
-1. Install OpenOCD and ensure it is configured for a J-Link probe, matching the expectations baked into the repo's OpenOCD config.
-2. Connect the debugger to the radio's programming header.
-3. From the repository root run:
-   ```sh
-   make flash
-   ```
-4. Use `make debug` afterwards if you need an interactive OpenOCD session.
+Use only the [Egzumer UV Tools web flasher](https://egzumer.github.io/uvtools/) for release images:
+
+1. Download the suffix-bearing `*.packed.bin` file from the GitHub release. Do not use the raw `*.bin` file for normal flashing.
+2. Open UV Tools in a browser that supports serial-device access and choose **Select firmware file**.
+3. Select the downloaded packed image.
+4. With the radio powered off, hold **PTT** + **top side key** and power it on. The blank screen indicates firmware download mode.
+5. Connect the USB programming cable and choose **Flash firmware**. Select the radio's serial port if the browser asks for permission.
+6. Leave the radio powered and connected until the transfer completes, then power-cycle it and confirm the loaner splash/version text.
 
 ## Field Notes
 - Carry one handset that stayed stock as a control; it helps confirm the loader steps when training new volunteers.

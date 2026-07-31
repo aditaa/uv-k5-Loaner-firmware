@@ -39,10 +39,35 @@ and release-process work merged since `v24.12.4`.
 - `loaner-firmware-LNR24C5.manifest.json`
 - `loaner-firmware-LNR24C5.sha256`
 
-## Hardware release gates
+## Flashing
 
-Do not publish the release until the results are recorded and accepted in:
+Flash the suffix-bearing packed image with the
+[Egzumer UV Tools web flasher](https://egzumer.github.io/uvtools/). Select the
+`loaner-firmware-LNR24C5.packed.bin` asset, put the radio into firmware download
+mode, and choose **Flash firmware**. Do not use the raw `.bin` asset for normal
+flashing.
 
-- #56 — complete radio hardware qualification;
-- #37 — unlocked-band RF/transmit bench validation; and
-- #46 — USB-C charging and charging-current diagnosis.
+## Hardware validation status
+
+The release owner confirmed successful GMRS transmit on the final functional
+firmware candidate, commit `1ed32cc` (`LNR24C5`, packed SHA-256
+`8fc0672fdbb320332843fa865a7b34c34f1dc5f98b429a4c4f7b0884cac7b191`). The
+release-tag commit adds documentation only; the firmware source and build
+configuration are unchanged from that tested candidate.
+
+The release owner explicitly deferred the following broader checks for this
+release. They remain open follow-up work and are not represented as passing:
+
+- #56 — complete radio hardware qualification is deferred so the release can
+  proceed after the primary GMRS transmit path passed. Accepted risk: untested
+  boot, display, keypad, audio, receive, and programming paths may still contain
+  hardware-only regressions.
+- #37 — full unlocked-band RF/transmit bench validation is deferred because the
+  completed hardware check covered GMRS transmit only. Accepted risk: output
+  power, PA-disable behavior, harmonics, spurious output, and band-edge behavior
+  outside that test remain unverified and must not be inferred from this release.
+- #46 — USB-C charging and charging-current diagnosis is deferred because the
+  firmware audit found no charger-enable/control output and the remaining work
+  is a hardware-path investigation. Accepted risk: affected radios may still
+  fail to charge over USB or may report charging current incorrectly; users
+  should not rely on USB charging until that issue is validated.
