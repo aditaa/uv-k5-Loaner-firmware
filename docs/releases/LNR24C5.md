@@ -58,8 +58,16 @@ configuration are unchanged from that tested candidate.
 The release owner explicitly deferred the following broader checks for this
 release. They remain open follow-up work and are not represented as passing:
 
-- #56 — complete radio hardware qualification;
-- #37 — unlocked-band RF/transmit bench validation; and
-- #46 — USB-C charging and charging-current diagnosis. The firmware audit found
-  no charger-enable/control output, so physical charging failure remains a
-  hardware-path investigation unless new evidence shows otherwise.
+- #56 — complete radio hardware qualification is deferred so the release can
+  proceed after the primary GMRS transmit path passed. Accepted risk: untested
+  boot, display, keypad, audio, receive, and programming paths may still contain
+  hardware-only regressions.
+- #37 — full unlocked-band RF/transmit bench validation is deferred because the
+  completed hardware check covered GMRS transmit only. Accepted risk: output
+  power, PA-disable behavior, harmonics, spurious output, and band-edge behavior
+  outside that test remain unverified and must not be inferred from this release.
+- #46 — USB-C charging and charging-current diagnosis is deferred because the
+  firmware audit found no charger-enable/control output and the remaining work
+  is a hardware-path investigation. Accepted risk: affected radios may still
+  fail to charge over USB or may report charging current incorrectly; users
+  should not rely on USB charging until that issue is validated.
