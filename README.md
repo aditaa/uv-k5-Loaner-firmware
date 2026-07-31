@@ -11,7 +11,7 @@ The project also gives COML/COMT staff a predictable path from the ICS-205 form 
 ## Quickstart
 1. Download the latest suffix-bearing packed release (for example `loaner-firmware-LNR24C5.packed.bin`) from the Releases page and, when practical, compare it with the published SHA-256 file.
 2. Open the [Egzumer UV Tools web flasher](https://egzumer.github.io/uvtools/) in a browser that supports serial-device access, then choose **Select firmware file** and select the packed image.
-3. With the radio powered off, hold the **PTT** and the **top side key** while turning it on. The display should stay blank, indicating the bootloader is active.
+3. With the radio powered off, hold the **PTT** while turning it on. The display should stay blank, indicating the bootloader is active.
 4. Connect the USB programming cable, choose **Flash firmware**, select the radio's serial port if prompted, and do not disconnect power or the cable until the transfer completes.
 5. Power the radio off and back on to confirm the welcome screen shows the release tag from the packed image.
 6. Spin the channel knob and verify that the loaner channel names appear as expected.
